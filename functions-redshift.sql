@@ -103,3 +103,8 @@ create or replace function to_uint128_array_or_null (pos int, data text) returns
 as $$
 select case when can_overflow($1, $2) then null else to_uint128_array($1, $2) end
 $$ language sql;
+
+create or replace function to_decimal (pos int, data text) returns decimal immutable
+as $$
+select case when can_overflow($1, $2) then null else to_uint128($1, $2) end
+$$ language sql;

@@ -14,4 +14,4 @@ CREATE TABLE IF NOT EXISTS tokens (
     social TEXT
 );
 
-\COPY tokens(symbol,name,type,address,ens_address,decimals,website,logo,support,social) FROM 'tokens.csv' DELIMITER '^' CSV HEADER;
+\COPY tokens(symbol,name,type,address,ens_address,decimals,website,logo,support,social) FROM 'tokens-betl.csv' DELIMITER '^' CSV HEADER;

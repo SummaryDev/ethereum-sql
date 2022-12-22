@@ -1,15 +1,15 @@
 -- library of functions to decode abi encoded data https://docs.soliditylang.org/en/develop/abi-spec.html
 
-create or replace function can_convert_to_decimal (pos int, data text) returns bool immutable
-as $$
---select to_int64(0, substring($2, $1+1, 32)) = 0
-select length(ltrim(substring($2, $1+1, 32), '0')) = 0
-$$ language sql;
-
-create or replace function to_decimal (pos int, data text) returns decimal immutable
-as $$
-select case when can_convert_to_decimal($1, $2) then to_uint128($1, $2) else null end
-$$ language sql;
+-- create or replace function can_convert_to_decimal (pos int, data text) returns bool immutable
+-- as $$
+-- --select to_int64(0, substring($2, $1+1, 32)) = 0
+-- select length(ltrim(substring($2, $1+1, 32), '0')) = 0
+-- $$ language sql;
+--
+-- create or replace function to_decimal (pos int, data text) returns decimal immutable
+-- as $$
+-- select case when can_convert_to_decimal($1, $2) then to_uint128($1, $2) else null end
+-- $$ language sql;
 
 -- drop function to_location (pos int, data text);
 -- drop function to_size (pos int, data text);
