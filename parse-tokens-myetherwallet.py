@@ -16,6 +16,7 @@ for file in jsonFiles:
     print (tokenJson["symbol"])
 
     # print headers, only once
+    # noinspection PyInterpreter
     if i == 0:
         headerStr = ''
         for column in columnNames:
