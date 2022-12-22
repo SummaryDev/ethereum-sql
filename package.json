@@ -1,0 +1,24 @@
+{
+  "dependencies": {
+    "keccak256": "^1.0.6",
+    "node-fetch": "^3.3.0"
+  },
+  "type": "module",
+  "name": "etl",
+  "description": "Scripts to extract, transform and load blockchain data into databases",
+  "version": "1.0.0",
+  "main": "parse-contracts-blockchain-etl.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SummaryDev/etl.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/SummaryDev/etl/issues"
+  },
+  "homepage": "https://github.com/SummaryDev/etl#readme"
+}
