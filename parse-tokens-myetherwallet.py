@@ -1,12 +1,12 @@
 import json
 import os
 
-jsonDir = './eth'
+jsonDir = '../ethereum-lists/src/tokens/eth'
 jsonFiles = os.listdir(jsonDir)
 csvFilePath = './tokens.csv'
 csvFile = open(csvFilePath, "w")
 columnNames = ['symbol','name','type','address','ens_address','decimals','website','logo','support','social']
-csvDelimiter = '^'
+csvDelimiter = '|'
 
 i = 0
 for file in jsonFiles:

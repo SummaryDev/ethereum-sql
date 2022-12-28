@@ -1,5 +1,7 @@
 -- library of functions to decode abi encoded data https://docs.soliditylang.org/en/develop/abi-spec.html
 
+set search_path to eth;
+
 -- create or replace function can_convert_to_decimal (pos int, data text) returns bool immutable
 -- as $$
 -- --select to_int64(0, substring($2, $1+1, 32)) = 0
