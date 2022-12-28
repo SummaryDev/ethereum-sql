@@ -2,7 +2,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import keccak256 from 'keccak256';
 
-function processAbi(abi) {
+function parseEventAbi(abi) {
   if (abi.anonymous) {
     console.log('skipping abi anonymous')
     return
@@ -15,9 +15,9 @@ function processAbi(abi) {
 
   const supportedTypesDict = {
     'address': {'function': 'to_address', 'args': [], 'type': 'text'},
-    'uint256': {'function': 'to_uint128_array_or_null', 'args': [], 'type': 'decimal'},
+    'uint256': {'function': 'to_uint256', 'args': [], 'type': 'decimal'},
     'address[]': {'function': 'to_array', 'args': ['address'], 'type': 'text'}, // todo what should be the result column type of arrays? not text but super or array?
-    'uint256[]': {'function': 'to_array', 'args': ['to_uint128_array_or_null'], 'type': 'text'},
+    'uint256[]': {'function': 'to_array', 'args': ['to_uint256'], 'type': 'text'},
     'string[]': {'function': 'to_array', 'args': ['string'], 'type': 'text'},
     'bytes[]': {'function': 'to_array', 'args': ['bytes'], 'type': 'text'},
     'bool[]': {'function': 'to_array', 'args': ['bool'], 'type': 'text'},
@@ -30,25 +30,28 @@ function processAbi(abi) {
     'bytes4': {'function': 'to_fixed_bytes', 'args': [4], 'type': 'text'},
     'uint32': {'function': 'to_uint32', 'args': [], 'type': 'decimal'},
     'bytes16': {'function': 'to_fixed_bytes', 'args': [16], 'type': 'text'},
-    'uint256[3]': {'function': 'to_fixed_array', 'args': ['to_uint128_array_or_null', 3], 'type': 'text'},
-    'uint256[2]': {'function': 'to_fixed_array', 'args': ['to_uint128_array_or_null', 2], 'type': 'text'},
-    'uint256[4]': {'function': 'to_fixed_array', 'args': ['to_uint128_array_or_null', 4], 'type': 'text'},
+    'uint256[3]': {'function': 'to_fixed_array', 'args': ['to_uint256', 3], 'type': 'text'},
+    'uint256[2]': {'function': 'to_fixed_array', 'args': ['to_uint256', 2], 'type': 'text'},
+    'uint256[4]': {'function': 'to_fixed_array', 'args': ['to_uint256', 4], 'type': 'text'},
     'address[2]': {'function': 'to_fixed_array', 'args': ['address', 2], 'type': 'text'},
     'address[4]': {'function': 'to_fixed_array', 'args': ['address', 4], 'type': 'text'},
     'bytes20': {'function': 'to_fixed_bytes', 'args': [20], 'type': 'text'}
   };
 
   const types = []
+  const typesIndexed = []
+  const typesIndexedWithNames = []
   const functionsColumns = []
+  const functionsColumnsWithNames = []
   const functionsJson = []
   const columns = []
 
-  let indexTopic = 1
-  let indexData = 0
+  let counterTopic = 1
+  let counterData = 0
 
   const abiName = abi.name
 
-  if(abi.inputs.length === 0) {
+  if (abi.inputs.length === 0) {
     console.warn(`skipping abi ${abiName} for no inputs`) // todo allow no input abis?
     return
   }
@@ -68,30 +71,44 @@ function processAbi(abi) {
     const a = []
 
     if (input.indexed) {
-      a.push(`topics[${indexTopic}]::text`)
-      indexTopic++
+      a.push(`topics[${counterTopic}]::text`)
+      typesIndexed.push(`${input.type}_topic${counterTopic}`)
+      typesIndexedWithNames.push(`${input.type}_${input.name}`)
+      functionsColumns.push(`${t.function}(2, ${a.concat(t.args).join()}) "topic${counterTopic}"`)
+      counterTopic++
     } else {
       a.push(`data::text`)
-      indexData++
+      typesIndexed.push(`${input.type}_data${counterData}`)
+      typesIndexedWithNames.push(`${input.type}_${input.name}_d`)
+      functionsColumns.push(`${t.function}(2, ${a.concat(t.args).join()}) "data${counterData}"`)
+      counterData++
     }
 
-    if (indexData > 1) {
+    if (counterData > 1) {
       console.warn(`skipping abi ${abiName} for data having more than one input`)
       return
     }
 
-    functionsColumns.push(`${t.function}(2, ${a.concat(t.args).join()}) "${input.name}"`)
+    functionsColumnsWithNames.push(`${t.function}(2, ${a.concat(t.args).join()}) "${input.name}"`)
     functionsJson.push(`''${input.name}'',${t.function}(2, ${a.concat(t.args).join()})`)
   }
 
-  const signature = `${abiName}(${types.join()})`
-  const hash = '0x' + keccak256(signature).toString('hex')
+  const hash = '0x' + keccak256(`${abiName}(${types.join()})`).toString('hex')
 
-  return {name: abiName, signature: signature, hash: hash, unpack: `${functionsColumns.join()}`, json: `object(${functionsJson.join()})`, columns: columns.join()}
+  return {
+    name: abiName,
+    hash: hash,
+    signature: `${abiName}_${typesIndexedWithNames.join('_')}`,
+    signature_typed: `${abiName}_${typesIndexed.join('_')}`,
+    unpack: `${functionsColumnsWithNames.join()}`,
+    unpack_typed: `${functionsColumns.join()}`,
+    json: `object(${functionsJson.join()})`,
+    columns: columns.join()
+  }
 }
 
 function fromDir(startPath, filter, callback) {
-  console.log('starting from dir '+startPath+'/');
+  console.log('starting from dir ' + startPath + '/');
 
   if (!fs.existsSync(startPath)) {
     console.log("no dir ", startPath);
@@ -108,7 +125,7 @@ function fromDir(startPath, filter, callback) {
   }
 }
 
-function processFiles() {
+function processBlockchainEtlFiles() {
   const records = []
 
   fromDir('../ethereum-etl-airflow/dags/resources/stages/parse/table_definitions/', /\.json$/, filename => {
@@ -135,7 +152,7 @@ function processFiles() {
       name: j.table.table_name.split('_event_')[0]
     }
 
-    const abi = processAbi(j.parser.abi)
+    const abi = parseEventAbi(j.parser.abi)
 
     if (abi) {
       const r = {
@@ -147,35 +164,34 @@ function processFiles() {
     }
   })
 
-  // console.log(JSON.stringify(records))
-
-  const apps = [...new Set(records.map(r => r.contract.appName))];
-  // console.log(apps)
-
+  const apps = [...new Set(records.map(r => r.contract.appName))]
   const valuesApps = apps.map(a => `('${a}')`)
-  const sqlApps = `insert into app (name) values ${valuesApps.join()} on conflict(name) do nothing;`
-  // console.log(sqlApps);
+  const sqlApp = `insert into app (name) values ${valuesApps.join()}`
 
-  const contracts = [...new Set(records.map(r => JSON.stringify(r.contract)))].map(s => JSON.parse(s))
-  // console.log(contracts)
-
+  const contracts = [...new Map(records.map(r => r.contract).map(item => [item['address'], item])).values()]
   const valuesContract = contracts.map(o => `('${o.address}', '${o.name}', '${o.appName}')`)
-  const sqlContracts = `insert into contract (address, name, app_name) values ${valuesContract.join()} on conflict(address) do nothing;`
-  // console.log(sqlContracts)
+  const sqlContract = `insert into contract (address, name, app_name) values ${valuesContract.join()}`
 
   const abis = [...new Set(records.map(o => JSON.stringify(o.abi)))].map(s => JSON.parse(s))
-  // console.log(abis)
+  const valuesAbi = abis.map(o => `('${o.signature}', '${o.hash}', '${o.name}', '${o.unpack}', '${o.json}', '${o.columns}', '${o.signature_typed}', '${o.unpack_typed}')`)
+  const sqlAbi = `insert into abi (signature, hash, name, unpack, json, columns, signature_typed, unpack_typed) values ${valuesAbi.join()}` // todo on conflict update? update set unpack = excluded.unpack, columns = excluded.columns
 
-  const valuesAbi = abis.map(o => `('${o.hash}', '${o.name}', '${o.signature}', '${o.unpack}', '${o.json}', '${o.columns}')`)
-  const sqlEvents = `insert into abi (hash, name, signature, unpack, json, columns) values ${valuesAbi.join()} on conflict(hash) do nothing;` // todo on conflict update? update set unpack = excluded.unpack, columns = excluded.columns
-  // console.log(sqlEvents)
+  const valuesEvent = [...new Set(records.map(o => `('${o.contract.address}', '${o.abi.signature}')`))]
+  const sqlEvent = `insert into event (contract_address, abi_signature) values ${valuesEvent.join()}`
 
-  const valuesEvent = records.map(o => `('${o.contract.address}', '${o.abi.hash}')`)
-  const sqlContractEvents = `insert into event (contract_address, abi_hash) values ${valuesEvent.join()} on conflict(contract_address, abi_hash) do nothing;`
-  // console.log(sqlContractEvents)
+  // fs.writeFileSync('./parse-contracts-blockchain-etl-postgres-out.sql', [sqlApp, ' on conflict(address) do nothing; truncate table contract cascade', sqlContract, 'truncate table abi cascade', sqlAbi + ' on conflict(signature) do nothing', sqlEvent].join(';\n'))
+  fs.writeFileSync('./parse-contracts-blockchain-etl-postgres-out.sql', ['set search_path to eth', 'truncate table app cascade', sqlApp, 'truncate table contract cascade', sqlContract, 'truncate table abi cascade', sqlAbi, 'truncate table event cascade', sqlEvent].join(';\n'))
 
-  fs.writeFileSync('./parse-contracts-blockchain-etl-out.sql', sqlApps + '\ntruncate table contract cascade;' + sqlContracts + '\ntruncate table abi cascade;\n' + sqlEvents + '\n' + sqlContractEvents)
+  fs.writeFileSync('./parse-contracts-blockchain-etl-redshift-out.sql', ['set search_path to eth', 'truncate table app', sqlApp, 'truncate table contract', sqlContract, 'truncate table abi', sqlAbi, 'truncate table event', sqlEvent].join(';\n'))
+
+  const sqlDropView = abis.map(o => `drop view if exists "${o.signature}"`)
+
+  fs.writeFileSync('./parse-contracts-blockchain-etl-drop-view-out.sql', sqlDropView.join(';\n'))
+
+  const sqlCreateView = abis.map(o => `create or replace view "event_${o.signature}" as select address, transaction_hash, block_timestamp, date, ${o.unpack} from logs`)
+
+  fs.writeFileSync('./parse-contracts-blockchain-etl-create-view-out.sql', sqlCreateView.join(';\n'))
 
 }
 
-processFiles()
+processBlockchainEtlFiles()

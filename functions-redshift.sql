@@ -1,6 +1,7 @@
 /*
 creates functions based on redshift built it functions (and the lack of many)
  */
+set search_path to eth;
 
 create or replace function to_part (pos int, data text, pos_part int, bits int) returns text immutable
 as $$
@@ -107,4 +108,9 @@ $$ language sql;
 create or replace function to_decimal (pos int, data text) returns decimal immutable
 as $$
 select case when can_overflow($1, $2) then null else to_uint128($1, $2) end
+$$ language sql;
+
+create or replace function to_uint256 (pos int, data text) returns super immutable
+as $$
+select to_uint128_array_or_null($1, $2)
 $$ language sql;
