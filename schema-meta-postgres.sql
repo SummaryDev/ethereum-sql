@@ -55,19 +55,23 @@ begin
   if not found then raise exception 'cannot find abi for signature %',  e.abi_signature; end if;
 
   w := format('where block_timestamp between %L and %L and address = %L', after_timestamp, before_timestamp, e.contract_address);
+  raise notice '%', w;
 
   s := format('set search_path to eth; select %s, transaction_hash, block_timestamp from eth.logs %s and topics[0] = %L order by block_timestamp %s limit %L', u, w, h, order_dir, "limit");
   raise notice '%', s;
 
-  return query select n, * from dblink('redshift', s) as (payload json, transaction_hash text, "timestamp" timestamp);
+  return query select n, * from eth.dblink('redshift', s) as (payload json, transaction_hash text, "timestamp" timestamp);
 end
 $$
 language plpgsql stable;
 
-comment on function event_logs is E'@listSuffix omit';
+-- adds the condition argument to this connection, allowing to filter the set by any of its scalar fields https://www.graphile.org/postgraphile/smart-tags/#filterable
+comment on function event_logs is E'@filterable';
 
 -- select event_logs(e) from event e where e.contract_address = '0x0aacfbec6a24756c20d41914f2caba817c0d8521';
 -- select event_logs(e) from event e where e.contract_address = '0x0aacfbec6a24756c20d41914f2caba817c0d8521' and e.abi_signature = 'Transfer_address_from_address_to_uint256_amount_d';
+select event_logs(e) from event e where e.contract_address = '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48' and e.abi_signature = 'Transfer_address_from_address_to_uint256_value_d';
+select event_logs(e, '2022-03-01', '2022-05-01') from event e where e.contract_address = '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48' and e.abi_signature = 'Transfer_address_from_address_to_uint256_value_d';
 
 
 drop function contract_logs(c contract, "after_timestamp" timestamp, "before_timestamp" timestamp , order_dir text, "limit" int);
@@ -82,13 +86,12 @@ begin
   assert order_dir in ('asc', 'desc'), 'order_dir must be desc or asc not: ' || order_dir;
   assert "limit" < 1001, 'maximum limit is 1000 cannot limit by: ' || "limit";
 
+  w := 'where block_timestamp between ' || quote_literal(after_timestamp) || ' and ' || quote_literal(before_timestamp) || ' and address = ' || quote_literal(c.address);
+  raise notice '%', w;
+
   select into sunion string_agg('select ' || quote_literal(name) || ' name,' || json || ' payload, transaction_hash, block_timestamp from eth.logs ' || w || ' and topics[0] = ' || quote_literal(hash), ' union all ') from eth.abi left join eth.event on abi.signature = event.abi_signature where event.contract_address = c.address;
   if not found then raise exception 'cannot find abi for contract %',  c.address; end if;
-
-  w := 'where block_timestamp between ' || quote_literal(after_timestamp) || ' and ' || quote_literal(before_timestamp) || ' and address = ' || quote_literal(c.address);
---   raise notice '%', w;
-
---   raise notice '%', sunion;
+  raise notice '%', sunion;
 
   s := 'set search_path to eth; select * from (' || sunion || ') order by block_timestamp ' || order_dir || ' limit ' || quote_literal("limit");
   raise notice '%', s;
@@ -98,7 +101,10 @@ end
 $$
 language plpgsql stable;
 
-comment on function contract_logs is E'@listSuffix omit';
+-- adds the condition argument to this connection, allowing to filter the set by any of its scalar fields https://www.graphile.org/postgraphile/smart-tags/#filterable
+comment on function contract_logs is E'@filterable';
+
 
 -- select contract_logs(c, 'now'::timestamp - '1 month'::interval, 'now'::timestamp, 'desc', 10) from contract c where c.address = '0x0aacfbec6a24756c20d41914f2caba817c0d8521';
 -- select contract_logs(c) from contract c where c.address = '0x0aacfbec6a24756c20d41914f2caba817c0d8521';
+select contract_logs(c) from contract c where c.address = '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48';
