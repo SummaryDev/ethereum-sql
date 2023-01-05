@@ -23,13 +23,17 @@ create table event (contract_address text references contract, abi_signature tex
 create index on event (contract_address);
 create index on event (abi_signature);
 
-comment on table app is E'@listSuffix omit';
-comment on table contract is E'@listSuffix omit';
-comment on table abi is E'@listSuffix omit';
-comment on table event is E'@listSuffix omit';
-comment on constraint contract_app_name_fkey on contract is E'@fieldName app\n@foreignFieldName contracts\n@listSuffix omit';
-comment on constraint event_abi_signature_fkey on event is E'@fieldName abi\n@foreignFieldName event\n@listSuffix omit';
-comment on constraint event_contract_address_fkey on event is E'@fieldName contract\n@foreignFieldName event\n@listSuffix omit';
+-- comment on table app is E'@listSuffix omit';
+-- comment on table contract is E'@listSuffix omit';
+-- comment on table abi is E'@listSuffix omit';
+-- comment on table event is E'@listSuffix omit';
+comment on constraint contract_app_name_fkey on contract is E'@fieldName app\n@foreignFieldName contracts';
+comment on constraint event_abi_signature_fkey on event is E'@fieldName abi\n@foreignFieldName events';
+comment on constraint event_contract_address_fkey on event is E'@fieldName contract\n@foreignFieldName events';
+
+-- comment on constraint contract_app_name_fkey on contract is null;
+-- comment on constraint event_abi_signature_fkey on event is null;
+-- comment on constraint event_contract_address_fkey on event is null;
 
 
 drop table if exists log cascade;
