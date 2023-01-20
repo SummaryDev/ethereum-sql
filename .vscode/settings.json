@@ -1,0 +1,14 @@
+{
+    "sqltools.connections": [
+        {
+            "previewLimit": 50,
+            "server": "test-redshift-cluster-1.cujmiosxmo1p.eu-central-1.redshift.amazonaws.com",
+            "port": 5439,
+            "askForPassword": true,
+            "driver": "Redshift Driver (Dedicated ver)",
+            "name": "Redshift",
+            "database": "dev",
+            "username": "awsuser"
+        }
+    ]
+}
