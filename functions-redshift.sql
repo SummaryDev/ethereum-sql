@@ -1,7 +1,8 @@
 /*
-creates functions based on redshift built it functions (and the lack of many)
+creates functions based on redshift functions
  */
-set search_path to eth;
+
+set search_path to public;
 
 create or replace function to_part (pos int, data text, pos_part int, bits int) returns text immutable
 as $$

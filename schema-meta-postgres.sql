@@ -74,6 +74,7 @@ comment on function event_logs is E'@filterable';
 
 -- select event_logs(e) from event e where e.contract_address = '0x0aacfbec6a24756c20d41914f2caba817c0d8521';
 -- select event_logs(e) from event e where e.contract_address = '0x0aacfbec6a24756c20d41914f2caba817c0d8521' and e.abi_signature = 'Transfer_address_from_address_to_uint256_amount_d';
+select event_logs(e) from event e where e.contract_address = '0x00ee7423162d312a5c3bba6c4c7d8332c4d20f2c' and e.abi_signature = 'Transfer_address_from_address_to_uint256_amount_d';
 select event_logs(e) from event e where e.contract_address = '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48' and e.abi_signature = 'Transfer_address_from_address_to_uint256_value_d';
 select event_logs(e, '2022-03-01', '2022-05-01') from event e where e.contract_address = '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48' and e.abi_signature = 'Transfer_address_from_address_to_uint256_value_d';
 

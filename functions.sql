@@ -1,6 +1,9 @@
--- library of functions to decode abi encoded data https://docs.soliditylang.org/en/develop/abi-spec.html
+/*
+library of functions to decode abi encoded data https://docs.soliditylang.org/en/develop/abi-spec.html
+uses lower level functions created for redshift or another db
+ */
 
-set search_path to eth;
+set search_path to public;
 
 -- create or replace function can_convert_to_decimal (pos int, data text) returns bool immutable
 -- as $$

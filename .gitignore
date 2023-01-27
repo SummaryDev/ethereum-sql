@@ -1,3 +1,6 @@
-.env
+*.env
 *-out.*
 node_modules
+data
+metadata
+.idea
