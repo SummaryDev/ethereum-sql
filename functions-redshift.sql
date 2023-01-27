@@ -14,6 +14,16 @@ as $$
 select strtol(to_part($1, $2, $3, $4), 16)
 $$ language sql;
 
+create or replace function to_uint8 (pos int, data text) returns bigint immutable
+as $$
+select to_positive($1, $2, 0, 8)
+$$ language sql;
+
+create or replace function to_uint16 (pos int, data text) returns bigint immutable
+as $$
+select to_positive($1, $2, 0, 16)
+$$ language sql;
+
 create or replace function to_uint32 (pos int, data text) returns bigint immutable
 as $$
 select to_positive($1, $2, 0, 32)
