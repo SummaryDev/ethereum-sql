@@ -1,3 +1,5 @@
+create schema if not exists events;
+
 create schema if not exists eth;
 set search_path to eth;
 
@@ -11,7 +13,7 @@ create table contract (address text primary key, name text, app_name text refere
 
 drop table if exists abi cascade;
 
-create table abi (signature text primary key, name text not null, hash text not null, unpack text not null, json text not null, columns text not null, signature_typed text not null, unpack_typed text not null);
+create table abi (signature text primary key, name text not null, hash text not null, unpack text not null, json text not null, signature_typed text not null);
 
 drop table if exists event cascade;
 
@@ -77,4 +79,4 @@ language plpgsql;
 -- call contract_logs('0x0aacfbec6a24756c20d41914f2caba817c0d8521', 't', null, null, 'asc', 100);
 -- select * from t;
 
-select listagg('select ' || quote_literal(name) || ' name,' || json || ' payload, transaction_hash, block_timestamp from eth.logs and topics[0] = ' || quote_literal(hash), ' union all ') from eth.abi left join eth.event on abi.signature = event.abi_signature where event.contract_address = '0x0aacfbec6a24756c20d41914f2caba817c0d8521';
+-- select listagg('select ' || quote_literal(name) || ' name,' || json || ' payload, transaction_hash, block_timestamp from eth.logs and topics[0] = ' || quote_literal(hash), ' union all ') from eth.abi left join eth.event on abi.signature = event.abi_signature where event.contract_address = '0x0aacfbec6a24756c20d41914f2caba817c0d8521';
