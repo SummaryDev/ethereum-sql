@@ -9,18 +9,18 @@ create table app (name text primary key);
 
 drop table if exists contract cascade;
 
-create table contract (address text primary key, name text, app_name text references app);
+create table contract (address varchar(66) primary key, name text, app_name text references app);
 
 drop table if exists abi cascade;
 
-create table abi (signature text primary key, name text not null, hash text not null, unpack text not null, json text not null, signature_typed text not null);
+create table abi (signature varchar(512) primary key, name text not null, hash text not null, unpack varchar(1024) not null, json varchar(1024) not null, canonical text not null, table_name text not null);
 
 drop table if exists event cascade;
 
-create table event (contract_address text references contract, abi_signature text references abi, primary key (contract_address, abi_signature));
+create table event (contract_address varchar(66) references contract, abi_signature varchar(512) references abi, primary key (contract_address, abi_signature));
 
 
-drop procedure event_logs(contract_address text, abi_signature text, temp_table_name in varchar(128), "after_timestamp" timestamp, "before_timestamp" timestamp, order_dir text, "limit" int);
+/*drop procedure event_logs(contract_address text, abi_signature text, temp_table_name in varchar(128), "after_timestamp" timestamp, "before_timestamp" timestamp, order_dir text, "limit" int);
 
 create or replace procedure event_logs(contract_address text, abi_signature text, temp_table_name in varchar(128), "after_timestamp" timestamp, "before_timestamp" timestamp, order_dir text, "limit" int)
 as $$
@@ -79,4 +79,4 @@ language plpgsql;
 -- call contract_logs('0x0aacfbec6a24756c20d41914f2caba817c0d8521', 't', null, null, 'asc', 100);
 -- select * from t;
 
--- select listagg('select ' || quote_literal(name) || ' name,' || json || ' payload, transaction_hash, block_timestamp from eth.logs and topics[0] = ' || quote_literal(hash), ' union all ') from eth.abi left join eth.event on abi.signature = event.abi_signature where event.contract_address = '0x0aacfbec6a24756c20d41914f2caba817c0d8521';
+-- select listagg('select ' || quote_literal(name) || ' name,' || json || ' payload, transaction_hash, block_timestamp from eth.logs and topics[0] = ' || quote_literal(hash), ' union all ') from eth.abi left join eth.event on abi.signature = event.abi_signature where event.contract_address = '0x0aacfbec6a24756c20d41914f2caba817c0d8521';*/

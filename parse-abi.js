@@ -1,5 +1,5 @@
 import keccak256 from 'keccak256';
-import {supportedTypesDict, typeToName} from './util.js'
+import {supportedTypesDict, typeToName, signatureToName} from './util.js'
 
 export function parseEventAbi(abi) {
   if (abi.anonymous) {
@@ -14,8 +14,9 @@ export function parseEventAbi(abi) {
 
   const types = []
   const typesWithNames = []
-  const args = []
-  const json = []
+  const typesWithNamesIndexed = []
+  const argsUnpack = []
+  const argsJson = []
   const columns = []
 
   let counterTopic = 1
@@ -28,21 +29,29 @@ export function parseEventAbi(abi) {
     return
   }
 
-  let prevInputIndexed
+  // let prevInputIndexed
 
   for (let i = 0; i < abi.inputs.length; i++) {
     const input = abi.inputs[i]
     const t = supportedTypesDict[input.type]
 
     if (!t) {
+      // todo use raw hex value for unsupported type?
       // console.warn(`skipping abi ${abiName} for unsupported input type ${input.type}`)
+      // console.warn(`skipping abi for unsupported input type ${input.type}`)
       return
     }
 
-    if (i !== 0 && !prevInputIndexed && input.indexed) {
-      // console.warn(`indexed input ${JSON.stringify(input)} after non indexed in abi ${abiName}`)
-    }
-    prevInputIndexed = input.indexed
+    // if (counterData > 1) {
+    //   // console.warn(`truncating abi ${abiName} for data having more than one input`)
+    //   // console.warn(`truncating abi for data having more than one input ${JSON.stringify(abi)}`)
+    //   break
+    // }
+
+    // if (i !== 0 && !prevInputIndexed && input.indexed) {
+    //   console.warn(`indexed input ${JSON.stringify(input)} after non indexed in abi ${abiName}`)
+    // }
+    // prevInputIndexed = input.indexed
 
     input.nameFromType = typeToName(input.type, i)
 
@@ -55,37 +64,41 @@ export function parseEventAbi(abi) {
     const a = []
 
     if (input.indexed) {
+      a.push(2)
       a.push(`topics[${counterTopic}]::text`)
       typesWithNames.push(`${input.type}_${input.name}`)
+      typesWithNamesIndexed.push(`${input.type} indexed ${input.name}`)
       counterTopic++
     } else {
+      a.push(2 + counterData * 64)
       a.push(`data::text`)
       typesWithNames.push(`${input.type}_${input.name}_d`)
+      typesWithNamesIndexed.push(`${input.type} ${input.name}`)
       counterData++
     }
 
-    if (counterData > 1) {
-      // console.warn(`truncating abi ${abiName} for data having more than one input`)
-      // return
-      break
-    }
-
-    args.push(`${t.function}(2, ${a.concat(t.args).join()}) "${input.name}"`)
-    json.push(`''${input.name}'',${t.function}(2, ${a.concat(t.args).join()})`)
+    argsUnpack.push(`${t.function}(${a.concat(t.args).join()}) "${input.name}"`)
+    argsJson.push(`'${input.name}',${t.function}(${a.concat(t.args).join()})`)
   }
 
   const signature_typed = `${abiName}(${types.join()})`
   const signature_named = `${abiName}_${typesWithNames.join('_')}`
+  const signature_indexed = `${abiName}(${typesWithNamesIndexed.join(',')})`
+  const table_name = signatureToName(signature_named)
 
   const hash = '0x' + keccak256(signature_typed).toString('hex')
+
+  const unpack = `${argsUnpack.join()}`
+  const json = `object(${argsJson.join()})`
 
   return {
     name: abiName,
     hash: hash,
-    signature: signature_named,
-    signature_typed: signature_typed,
-    unpack: `${args.join()}`,
-    json: `object(${json.join()})`,
+    signature: signature_indexed,
+    canonical: signature_typed,
+    table_name: table_name,
+    unpack: unpack,
+    json: json,
     // columns: columns.join()
   }
 }

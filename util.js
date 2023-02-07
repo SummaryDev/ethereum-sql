@@ -61,7 +61,7 @@ export function writeCsvFiles(records, name) {
   stringify(valuesContract, {header: true}).pipe(fs.createWriteStream(`${folder}/${name}-contract.csv`));
 
   const abis = uniqueAbis(records)
-  const valuesAbi = abis.map(o => ({signature: o.signature, name: o.name, hash: o.hash, unpack: o.unpack, json: o.json.replace(/''/g, '\''), signature_typed: o.signature_typed}))
+  const valuesAbi = abis.map(o => ({signature: o.signature, name: o.name, hash: o.hash, unpack: o.unpack, json: o.json, canonical: o.canonical, table_name: o.table_name}))
   stringify(valuesAbi, {header: true}).pipe(fs.createWriteStream(`${folder}/${name}-abi.csv`));
 
   const events = uniqueEvents(records)
@@ -80,13 +80,13 @@ export function writeSqlViewFilesFromAbis(records, name) {
 
   const contractEvents = uniqueContractEvents(records)
 
-  const sqlCreateContractView = contractEvents.map(o => `create or replace view ${o.app_name}."${o.contract_name}_evt_${o.abi_name}" as select o.* from events.${signatureToName(o.abi_signature)} o left join eth.event e on o.address = e.contract_address left join eth.contract c on o.address = c.address where e.abi_signature = '${o.abi_signature}' and c.app_name = '${o.app_name}' and c.name = '${o.contract_name}'`).join(';\n')
+  const sqlCreateContractView = contractEvents.map(o => `create or replace view ${o.app_name}."${o.contract_name}_evt_${o.abi_name}" as select o.* from events."${o.abi_table_name}" o left join eth.event e on o.contract_address = e.contract_address left join eth.contract c on o.contract_address = c.address where e.abi_signature = '${o.abi_signature}' and c.app_name = '${o.app_name}' and c.name = '${o.contract_name}'`).join(';\n')
 
   fs.writeFileSync(`${folder}/${name}-create-contract-view.sql`, [/*'set enable_case_sensitive_identifier to true', */'set search_path to public', sqlCreateContractView].join(';\n'))
 
   const abis = uniqueAbis(records)
 
-  const sqlCreateView = abis.map(o => `create or replace view events."${signatureToName(o.signature)}" as select ${o.unpack}, address, transaction_hash, block_timestamp, date from eth.logs where topics[0] = '${o.hash}'`).join(';\n')
+  const sqlCreateView = abis.map(o => `create or replace view events."${o.table_name}" as select ${o.unpack}, address contract_address, transaction_hash evt_tx_hash, log_index evt_index, block_timestamp evt_block_time, block_number evt_block_number from eth.logs where topics[0] = '${o.hash}'`).join(';\n')
 
   fs.writeFileSync(`${folder}/${name}-create-event-view.sql`, [/*'set enable_case_sensitive_identifier to true', */'create schema if not exists events', 'set search_path to public', sqlCreateView].join(';\n'))
 
@@ -100,7 +100,7 @@ export function typeToName(t, i) {
 }
 
 export function signatureToName(s) {
-  return s.replace(/[(\[\],]/g, '_').replace(/[)]/g, '')
+  return s.replace(/[(\[\],]/g, '_').replace(/[)]/g, '').substring(0, 127)
 }
 
 export function writeSqlViewFilesFromSignatures(records, name) {
@@ -150,11 +150,12 @@ function uniqueAbis(records) {
 
 // event (link between a contract and one of its abis) unique by contract address and abi signature
 function uniqueEvents(records) {
-  return records.map(o => ({contract_address: o.contract.address, abi_signature: o.abi.signature}))
+  const j = records.map(o => JSON.stringify({contract_address: o.contract.address, abi_signature: o.abi.signature} ))
+  return [...new Set(j)].map(s => JSON.parse(s))
 }
 
 // event unique by contract address and abi signature
 function uniqueContractEvents(records) {
-  const j = records.map(o => JSON.stringify(({app_name: o.contract.appName, contract_name: o.contract.name, abi_name: o.abi.name, abi_signature: o.abi.signature})))
+  const j = records.map(o => JSON.stringify(({app_name: o.contract.appName, contract_name: o.contract.name, abi_name: o.abi.name, abi_signature: o.abi.signature, abi_table_name: o.abi.table_name})))
   return [...new Set(j)].map(s => JSON.parse(s))
 }
