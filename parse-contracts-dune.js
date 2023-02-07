@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import {parseEventAbi} from './parse-abi.js';
-import {fromDir, writeCsvFiles, writeSqlContractViewFiles} from './util.js';
+import {fromDir, writeCsvFiles, writeSqlInsertFiles, writeSqlViewFilesFromAbis} from './util.js';
 import JSONStream from 'JSONStream';
 
 function addRecord(records, d) {
@@ -39,22 +39,22 @@ function addRecord(records, d) {
 function processDuneFiles() {
   // /\.json$/
   // /\parse-dune-contracts-12-out.json$/
-  fromDir('./data/dune/contracts', /\.json$/, filename => {
+  fromDir('./data/dune/contracts', /01-out.json$/, filename => {
     console.log(filename)
 
+    const name = filename.replace(/^.*[\\\/]/, '').replace('.json', '')
     const records = []
 
     const jsonStream = JSONStream.parse('data.get_execution.execution_succeeded.data.*')
 
     jsonStream.on('data', d => {
       addRecord(records, d)
-    })
-
-    const name = filename.replace(/^.*[\\\/]/, '').replace('.json', '')
-
-    jsonStream.on('end', () => {
+    }).on('end', () => {
       writeCsvFiles(records, name)
-      // writeSqlViewFiles(records, name)
+      // writeSqlInsertFiles(records, name)
+      writeSqlViewFilesFromAbis(records, name)
+    }).on('error', e => {
+      console.error('cannot parse json', e)
     })
 
     fs.createReadStream(filename).pipe(jsonStream)

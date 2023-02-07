@@ -1,3 +1,4 @@
+#@IgnoreInspection BashAddShebang
 curl 'https://app-api.dune.com/v1/graphql' \
   -H 'authority: app-api.dune.com' \
   -H 'accept: */*' \

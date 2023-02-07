@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import {parseEventSignature} from './parse-signature.js';
-import {fromDir, writeSqlSignatureViewFiles} from './util.js';
+import {fromDir, writeSqlViewFilesFromSignatures} from './util.js';
 import {parse} from 'csv';
 import keccak256 from 'keccak256';
 
@@ -47,7 +47,7 @@ function processFlipsideFiles() {
         addRecord(records, d)
       })
       .on('end', () => {
-        writeSqlSignatureViewFiles(records, name)
+        writeSqlViewFilesFromSignatures(records, name)
       })
       .on('error', e => {
         console.error('cannot parse', e)

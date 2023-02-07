@@ -13,7 +13,7 @@ create index on contract (name);
 
 drop table if exists abi cascade;
 
-create table abi (signature text primary key, name text not null, hash text not null, unpack text not null, json text not null, columns text not null, signature_typed text not null, unpack_typed text not null);
+create table abi (signature text primary key, name text not null, hash text not null, unpack text not null, json text not null, canonical text not null, table_name text not null);
 create index on abi (hash);
 create index on abi (name);
 
@@ -36,7 +36,7 @@ comment on constraint event_contract_address_fkey on event is E'@fieldName contr
 -- comment on constraint event_contract_address_fkey on event is null;
 
 
-drop table if exists log cascade;
+/*drop table if exists log cascade;
 
 create table log (name text, payload json, transaction_hash text, timestamp timestamp);
 
@@ -112,4 +112,4 @@ comment on function contract_logs is E'@filterable';
 
 -- select contract_logs(c, 'now'::timestamp - '1 month'::interval, 'now'::timestamp, 'desc', 10) from contract c where c.address = '0x0aacfbec6a24756c20d41914f2caba817c0d8521';
 -- select contract_logs(c) from contract c where c.address = '0x0aacfbec6a24756c20d41914f2caba817c0d8521';
-select contract_logs(c) from contract c where c.address = '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48';
+-- select contract_logs(c) from contract c where c.address = '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48';*/
