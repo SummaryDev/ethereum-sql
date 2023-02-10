@@ -4,8 +4,8 @@ create or replace procedure event_logs(contract_address varchar(66), abi_signatu
 as $$
 declare
   w varchar(256);
-  s varchar(10240);
-  u varchar(10240);
+  s varchar(51200);
+  u varchar(51200);
   h varchar(66);
   n varchar(256);
 begin
@@ -35,8 +35,8 @@ create or replace procedure contract_logs(contract_address varchar(66), temp_tab
 as $$
 declare
   w varchar(256);
-  s varchar(10240);
-  sunion varchar(10240);
+  s varchar(51200);
+  sunion varchar(51200);
 begin
   w := 'where block_timestamp between ' || quote_literal(nvl(after_timestamp, 'now'::timestamp - '1 month'::interval)) || ' and ' || quote_literal(nvl(before_timestamp, 'now'::timestamp)) || ' and address = ' || quote_literal(contract_address);
   raise notice '%', w;
