@@ -37,27 +37,45 @@ function addRecord(records, d) {
 }
 
 function processDuneFiles() {
+  const promises = []
+
   // /\.json$/
   // /\parse-dune-contracts-12-out.json$/
-  fromDir('./data/dune/contracts', /01-out.json$/, filename => {
+  fromDir('./data/dune/contracts', /-out.json$/, filename => {
     console.log(filename)
 
-    const name = filename.replace(/^.*[\\\/]/, '').replace('.json', '')
     const records = []
 
     const jsonStream = JSONStream.parse('data.get_execution.execution_succeeded.data.*')
 
-    jsonStream.on('data', d => {
-      addRecord(records, d)
-    }).on('end', () => {
-      writeCsvFiles(records, name)
-      // writeSqlInsertFiles(records, name)
-      writeSqlViewFilesFromAbis(records, name)
-    }).on('error', e => {
-      console.error('cannot parse json', e)
+    const p = new Promise((resolve, reject) => {
+
+      jsonStream.on('data', d => {
+        addRecord(records, d)
+      }).on('end', () => {
+        resolve(records)
+        console.log(`read ${records.length} records from ${filename}`)
+      }).on('error', e => {
+        const m = `cannot parse json in ${filename}`
+        console.error(m, e)
+        reject(m)
+      })
+
     })
 
+    promises.push(p)
+
     fs.createReadStream(filename).pipe(jsonStream)
+  })
+
+  Promise.all(promises).then(results => {
+    const allRecords = results.flat()
+    console.log(`resolved ${results.length} results with ${allRecords.length} records total`)
+
+    const name = 'parse-contracts-dune'
+
+    writeCsvFiles(allRecords, name)
+    writeSqlViewFilesFromAbis(allRecords, name)
   })
 
 }

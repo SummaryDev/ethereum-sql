@@ -21,7 +21,7 @@ psql -f ./copy-metadata-dune-postgres.sql
 
 info "copy csv to s3 for redshift"
 
-aws s3 cp metadata s3://summary.dev/metadata --exclude "*" --include "*01*.csv" --recursive
+aws s3 cp metadata s3://summary.dev/metadata --exclude "*" --include "*.csv" --recursive
 
 info "copy csv to redshift"
 
@@ -36,14 +36,14 @@ info "drop events schema in redshift"
 psql -c 'drop schema events cascade'
 
 #for i in 01 02 03 04 05 06 07 08 09 10 11 12
-for i in 01
+for i in 01 02 03 04 05 06 07 08 09 10 11 12
 do
 info "drop schemas in redshift ${i}"
 psql -f metadata/parse-dune-contracts-${i}-out-drop-app-schema.sql
 done
 
 #for i in 01 02 03 04 05 06 07 08 09 10 11 12
-for i in 01
+for i in 01 02 03 04 05 06 07 08 09 10 11 12
 do
 info "create views in redshift ${i}"
 psql -f metadata/parse-dune-contracts-${i}-out-create-app-schema.sql -f metadata/parse-dune-contracts-${i}-out-create-event-view.sql -f metadata/parse-dune-contracts-${i}-out-create-contract-view.sql
