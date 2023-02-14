@@ -1,4 +1,4 @@
-set search_path to eth;
+set search_path to ethereum;
 
 -- https://github.com/hasura/hasura-oracle-fdw/blob/master/README-REDSHIFT.md
 -- https://aws.amazon.com/blogs/big-data/join-amazon-redshift-and-amazon-rds-postgresql-with-dblink/
@@ -22,5 +22,5 @@ create user mapping for postgres server redshift options (user '$PGUSER', passwo
 
 -- test it
 -- select * from dblink('redshift', $redshift$
--- select topics, data from eth.logs limit 10;
+-- select topics, data from ethereum.logs limit 10;
 -- $redshift$) as logs(topics json, data text);

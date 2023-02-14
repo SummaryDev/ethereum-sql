@@ -1,4 +1,4 @@
-set search_path to eth;
+set search_path to metadata;
 
 truncate table label;
 truncate table abi;

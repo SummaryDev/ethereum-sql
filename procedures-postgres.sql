@@ -1,4 +1,4 @@
-set search_path to eth;
+set search_path to ethereum;
 
 drop table if exists log cascade;
 
@@ -18,7 +18,7 @@ begin
   s := format('call event_logs(%L, %L, ''t'', %L, %L, %L, %s); select * from t order by evt_block_number desc, evt_index desc;', e.contract_address, e.abi_signature, after_timestamp, before_timestamp, order_dir, "limit");
   raise notice '%', s;
 
-  return query select * from eth.dblink('redshift', s) as (name text, payload json, transaction_hash text, log_index int, block_timestamp timestamp, block_number int);
+  return query select * from ethereum.dblink('redshift', s) as (name text, payload json, transaction_hash text, log_index int, block_timestamp timestamp, block_number int);
 end
 $$
 language plpgsql stable;
@@ -49,7 +49,7 @@ begin
   s := format('call contract_logs(%L, ''t'', %L, %L, %L, %s); select * from t order by evt_block_number desc, evt_index desc;', c.address, after_timestamp, before_timestamp, order_dir, "limit");
   raise notice '%', s;
 
-  return query select * from eth.dblink('redshift', s) as (name text, payload json, transaction_hash text, log_index int, block_timestamp timestamp, block_number int);
+  return query select * from ethereum.dblink('redshift', s) as (name text, payload json, transaction_hash text, log_index int, block_timestamp timestamp, block_number int);
 end
 $$
 language plpgsql stable;
@@ -61,4 +61,4 @@ comment on function contract_logs is E'@filterable';
 -- select contract_logs(c, 'now'::timestamp - '1 month'::interval, 'now'::timestamp, 'desc', 10) from contract c where c.address = '0x0aacfbec6a24756c20d41914f2caba817c0d8521';
 -- select contract_logs(c) from contract c where c.address = '0x0aacfbec6a24756c20d41914f2caba817c0d8521';
 -- select contract_logs(c) from contract c where c.address = '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48';
--- select contract_logs(c, '2023-01-01', '2023-01-10', 'desc', 100) from contract c where c.address = '0x7fc66500c84a76ad7e9c93437bfc5ac33e2ddae9';
+-- select contract_logs(c, '2023-01-01', '2023-01-02', 'desc', 10) from contract c where c.address = '0x7fc66500c84a76ad7e9c93437bfc5ac33e2ddae9';

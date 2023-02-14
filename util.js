@@ -106,15 +106,15 @@ export function writeSqlViewFilesFromAbis(labels, contracts, events, abis, contr
   fileDropLabel.end()
 
   const fileEventView = fs.createWriteStream(`${folder}/${name}-create-event-view.sql`, {flags: 'w'})
-  fileEventView.write('drop schema events cascade;\ncreate schema events;\nset search_path to public;\n')
+  fileEventView.write('drop schema event cascade;\ncreate schema event;\nset search_path to public;\n')
   abis.forEach(v => {
-    fileEventView.write(`create or replace view events."${v.table_name}" as select ${v.unpack}, address contract_address, transaction_hash evt_tx_hash, log_index evt_index, block_timestamp evt_block_time, block_number evt_block_number from eth.logs where topics[0] = '${v.hash}';\n`)
+    fileEventView.write(`create or replace view event."${v.table_name}" as select ${v.unpack}, address contract_address, transaction_hash evt_tx_hash, log_index evt_index, block_timestamp evt_block_time, block_number evt_block_number from data.logs where topics[0] = '${v.hash}';\n`)
   })
   fileEventView.end()
 
   const fileContractView = fs.createWriteStream(`${folder}/${name}-create-contract-view.sql`, {flags: 'w'})
   contractEvents.forEach((v, k) => {
-    fileContractView.write(`create or replace view ${k} as select v.* from events."${v.abi_table_name}" v left join eth.event e on e.contract_address = v.contract_address left join eth.contract c on e.contract_address = c.address where e.abi_signature = '${v.abi_signature}' and c.label = '${v.contract_label}' and c.name = '${v.contract_name}';\n`)
+    fileContractView.write(`create or replace view ${k} as select v.* from event."${v.abi_table_name}" v left join metadata.event e on e.contract_address = v.contract_address left join metadata.contract c on e.contract_address = c.address where e.abi_signature = '${v.abi_signature}' and c.label = '${v.contract_label}' and c.name = '${v.contract_name}';\n`)
   })
   fileContractView.end()
 }

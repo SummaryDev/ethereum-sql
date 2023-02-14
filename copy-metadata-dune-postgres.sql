@@ -1,4 +1,4 @@
-set search_path to eth;
+set search_path to ethereum;
 
 truncate table label cascade;
 truncate table abi cascade;

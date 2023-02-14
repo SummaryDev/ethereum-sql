@@ -1,5 +1,8 @@
-create schema if not exists eth;
-set search_path to eth;
+-- create schema if not exists eth;
+-- set search_path to eth;
+
+create schema if not exists ethereum;
+set search_path to ethereum;
 
 -- drop table if exists app cascade;
 

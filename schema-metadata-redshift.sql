@@ -1,9 +1,22 @@
-create schema if not exists eth;
-set search_path to eth;
+-- create schema if not exists eth;
+-- set search_path to eth;
+
+-- set search_path to public;
+
+create schema if not exists metadata;
+set search_path to metadata;
+
+-- move from schema eth to schema data
+-- create schema if not exists data;
+-- --alter table eth.logs set schema data;
+-- CREATE TABLE data.logs (LIKE eth.logs);
+-- ALTER TABLE data.logs APPEND FROM eth.logs;
+-- --DROP TABLE eth.logs;
 
 -- drop table if exists app cascade;
 -- drop table if exists namespace cascade;
-drop table if exists project cascade;
+-- drop table if exists project cascade;
+
 drop table if exists label cascade;
 
 create table label (name text primary key);
