@@ -1,5 +1,5 @@
 import keccak256 from 'keccak256';
-import {supportedTypesDict, typeToName, signatureToName} from './util.js'
+import {supportedTypesDict, typeToName, eventTableName} from './util.js'
 
 export function parseEventAbi(abi) {
   if (abi.anonymous) {
@@ -61,30 +61,30 @@ export function parseEventAbi(abi) {
     types.push(input.type)
     columns.push(`${input.nameFromType} as ${input.name}`)
 
-    const a = []
+    const args = []
 
     if (input.indexed) {
-      a.push(2)
-      a.push(`topics[${counterTopic}]::text`)
+      args.push(2)
+      args.push(`topics[${counterTopic}]::text`)
       typesWithNames.push(`${input.type}_${input.name}`)
       typesWithNamesIndexed.push(`${input.type} indexed ${input.name}`)
       counterTopic++
     } else {
-      a.push(2 + counterData * 64)
-      a.push(`data::text`)
+      args.push(2 + counterData * 64)
+      args.push(`data::text`)
       typesWithNames.push(`${input.type}_${input.name}_d`)
       typesWithNamesIndexed.push(`${input.type} ${input.name}`)
       counterData++
     }
 
-    argsUnpack.push(`${t.function}(${a.concat(t.args).join()}) "${input.name}"`)
-    argsJson.push(`'${input.name}',${t.function}(${a.concat(t.args).join()})`)
+    argsUnpack.push(`${t.function}(${args.concat(t.args).join()}) "${input.name}"`)
+    argsJson.push(`'${input.name}',${t.function}(${args.concat(t.args).join()})`)
   }
 
   const signature_typed = `${abiName}(${types.join()})`
   const signature_named = `${abiName}_${typesWithNames.join('_')}`
   const signature_indexed = `${abiName}(${typesWithNamesIndexed.join(',')})`
-  const table_name = signatureToName(signature_named)
+  const table_name = eventTableName(signature_named)
 
   const hash = '0x' + keccak256(signature_typed).toString('hex')
 

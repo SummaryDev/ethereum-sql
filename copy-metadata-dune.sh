@@ -52,4 +52,13 @@ done
 
 
 
+psql -f ./schema-metadata-redshift.sql \
+-f ./copy-metadata-dune-redshift.sql \
+-f ./metadata/parse-contracts-dune-drop-label-schema.sql \
+-f ./metadata/parse-contracts-dune-create-label-schema.sql \
+-f ./metadata/parse-contracts-dune-create-event-view.sql \
+-f ./metadata/parse-contracts-dune-create-contract-view.sql
+
+
+
 

@@ -1,3 +1,5 @@
+set search_path to eth;
+
 drop table if exists log cascade;
 
 create table log (name text, payload json, transaction_hash text, log_index int, block_timestamp timestamp, block_number int);
@@ -34,7 +36,7 @@ comment on function event_logs is E'@filterable';
 
 
 
-drop function contract_logs(c contract, "after_timestamp" timestamp, "before_timestamp" timestamp , order_dir text, "limit" int);
+--drop function contract_logs(c contract, "after_timestamp" timestamp, "before_timestamp" timestamp , order_dir text, "limit" int);
 
 create or replace function contract_logs(c contract, "after_timestamp" timestamp default 'now'::timestamp - '1 month'::interval, "before_timestamp" timestamp default 'now'::timestamp, order_dir text default 'desc', "limit" int default 10)
 returns setof log as $$
