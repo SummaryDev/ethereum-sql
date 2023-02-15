@@ -98,7 +98,7 @@ insert into erc20 (ticker) values ('usdc');
 insert into erc20 (ticker) values ('dai');
 insert into erc20 (ticker) values ('link');
 
--- function to search for erc20 transfers in redshift takes erc20 table so it attaches to erc20 node in hraphile
+-- function to search for erc20 transfers in redshift takes erc20 table so it attaches to erc20 node in graphile
 drop function if exists erc20_transfer(erc20 erc20, "from" text, "to" text , "value" numeric , after_block_timestamp timestamp without time zone , "before_block_timestamp" timestamp without time zone , order_by text , order_dir text , "limit" integer );
 
 create or replace function erc20_transfer("erc20" erc20, "from" text default null, "to" text default null, "value" dec default null, "after_block_timestamp" timestamp default 'now'::timestamp - '1 month'::interval, "before_block_timestamp" timestamp default 'now'::timestamp, order_by text default 'block_timestamp', order_dir text default 'desc', "limit" int default 10)

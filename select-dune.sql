@@ -6,6 +6,7 @@ order by 1, 2, 4 limit 100;
 
 select * from ethereum.signatures;
 
+-- convert json to csv
 -- cat parse-dune-signatures-out.json | jq -r '.data.get_execution.execution_succeeded.data[] | [.id, .signature, .abi] | @csv' > parse-dune-signatures-out.csv
 
 select namespace, name, address, base, dynamic, id, factory, abi from ethereum.contracts order by namespace, name limit 50000;
@@ -24,5 +25,6 @@ select namespace, name, address, base, dynamic, id, factory, abi from ethereum.c
 -- 583283 rows in ethereum.contracts
 select count(distinct id) from ethereum.contracts; -- 583304 distinct ids
 
+-- convert json to csv
 cat parse-dune-contracts-out.json | jq --raw-output '.data.get_execution.execution_succeeded.data[] | [.namespace, .name, .address, .base, .dynamic, .id, .factory, (.abi | @text)] | @csv' > parse-dune-contracts-out.csv
 

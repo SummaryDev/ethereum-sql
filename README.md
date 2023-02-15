@@ -6,13 +6,11 @@ transactional data into Postgres and Redshift.
 
 public schema
 
-~~ethereum schema~~
-
 functions
 - to_address
 - to_uint256
 
-ethereum schema
+data schema
 
 tables for raw data in aws format
 - blocks
@@ -20,11 +18,7 @@ tables for raw data in aws format
 - logs
 - traces 
 
-~~ethereum_metadata schema~~ 
-
-~~metadata schema~~ 
-
-~~ethereum schema~~
+metadata schema
 
 tables
 - label
@@ -50,12 +44,10 @@ views
 - Pair_evt_Transfer
 - Pair_evt_Approval
 
+ethereum schema
 
-
-ethereum-goerli
+tables for raw data in dune format
 - blocks
 - transactions
 - logs
-- traces 
-
-ethereum-goerli-metadata
+- traces

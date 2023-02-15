@@ -11,54 +11,59 @@ info "generate metadata"
 
 node parse-contracts-dune.js
 
-info "copy csv to postgres"
+info "create metadata schema in postgres"
 
 source ./postgres.env
-
 env | grep ^PG
 
+psql -f ./schema-metadata-postgres.sql
+
+info "copy csv to postgres"
+
 psql -f ./copy-metadata-dune-postgres.sql
+
+info "create foreign server dblink from postgres to redshift"
+
+source redshift.env && envsubst < ./foreign-server.sql > ./foreign-server-out.sql && source ./postgres.env
+
+psql -f foreign-server-out.sql
+
+info "create procedures in postgres"
+
+psql -f procedures-postgres.sql
 
 info "copy csv to s3 for redshift"
 
 aws s3 cp metadata s3://summary.dev/metadata --exclude "*" --include "*.csv" --recursive
 
-info "copy csv to redshift"
+info "create metadata schema in redshift"
 
-source .env
-
+source redshift.env
 env | grep ^PG
+
+psql -f ./schema-metadata-redshift.sql
+
+info "copy csv to redshift"
 
 psql -f ./copy-metadata-dune-redshift.sql
 
-info "drop events schema in redshift"
+info "drop label schemas in redshift"
 
-psql -c 'drop schema events cascade'
+psql -f metadata/parse-contracts-dune-drop-label-schema.sql
 
-#for i in 01 02 03 04 05 06 07 08 09 10 11 12
-for i in 01 02 03 04 05 06 07 08 09 10 11 12
-do
-info "drop schemas in redshift ${i}"
-psql -f metadata/parse-dune-contracts-${i}-out-drop-app-schema.sql
-done
+info "drop event schema in redshift"
 
-#for i in 01 02 03 04 05 06 07 08 09 10 11 12
-for i in 01 02 03 04 05 06 07 08 09 10 11 12
-do
-info "create views in redshift ${i}"
-psql -f metadata/parse-dune-contracts-${i}-out-create-app-schema.sql -f metadata/parse-dune-contracts-${i}-out-create-event-view.sql -f metadata/parse-dune-contracts-${i}-out-create-contract-view.sql
-done
+psql -c 'drop schema event cascade'
 
+info "create schemas in redshift"
+psql -f metadata/parse-contracts-dune-create-label-schema.sql
 
+info "create event views in redshift"
+psql -f metadata/parse-contracts-dune-create-event-view.sql
 
+info "create contract views in redshift"
+psql -f metadata/parse-contracts-dune-create-contract-view.sql
 
-psql -f ./schema-metadata-redshift.sql \
--f ./copy-metadata-dune-redshift.sql \
--f ./metadata/parse-contracts-dune-drop-label-schema.sql \
--f ./metadata/parse-contracts-dune-create-label-schema.sql \
--f ./metadata/parse-contracts-dune-create-event-view.sql \
--f ./metadata/parse-contracts-dune-create-contract-view.sql
+info "create procedures in redshift"
 
-
-
-
+psql -f procedures-redshift.sql
