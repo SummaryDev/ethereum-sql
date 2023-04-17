@@ -46,7 +46,7 @@ $$ language sql;
 
 create or replace function to_negative (pos int, data text, pos_part int, bits int) returns bigint immutable
 as $$
-select ~strtol(to_hex(~to_binary($1, $2, $3, $4)), 16)
+select ~strtol(to_hex(~to_binary($1, $2, $3, $4)), 16) -- todo forgot to add 1 to binary inverse?
 $$ language sql;
 
 create or replace function to_int32 (pos int, data text) returns bigint immutable
