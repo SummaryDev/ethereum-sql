@@ -17,8 +17,10 @@ drop server if exists redshift cascade;
 
 create server redshift foreign data wrapper postgres_fdw options (host '$PGHOST', port '$PGPORT', dbname 'dev', sslmode 'require');
 
-drop user mapping if exists for postgres server redshift;
-create user mapping for postgres server redshift options (user '$PGUSER', password '$PGPASSWORD');
+drop user mapping if exists for graphile server redshift;
+create user mapping for graphile server redshift options (user '$PGUSER', password '$PGPASSWORD');
+
+grant usage on foreign server redshift to graphile;
 
 -- test it
 -- select * from dblink('redshift', $redshift$

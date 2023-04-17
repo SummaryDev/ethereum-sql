@@ -26,7 +26,7 @@ info "create foreign server dblink from postgres to redshift"
 
 source redshift.env && envsubst < ./foreign-server.sql > ./foreign-server-out.sql && source ./postgres.env
 
-psql -f foreign-server-out.sql
+psql -f ./foreign-server-out.sql
 
 info "create procedures in postgres"
 
