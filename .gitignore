@@ -6,3 +6,6 @@ metadata
 .idea
 scratch*json
 duckdb
+docs/*.pptx
+docs/*.pdf
+docs/*.html
