@@ -6,13 +6,22 @@ keywords: ethereum,indexing,events
 url: https://summary.dev
 ---
 
-# Events in Ethereum
+# How we index, store and decode blockchain data
+
+We explain the techniques we at **summary.dev** employ to index and 
+decode Ethereum events and make a case for an extract-load-transform
+process that preserves captured data and leaves flexibility to interpret
+it.
+
+---
+
+## Events in Ethereum
 
 Smart contracts emit events (aka logs) which can be captured and analyzed.
 
 Events can be searched for by their `signature` and optionally by 3
-other `indexed` parameters called `topics`, while the rest of the
-payload goes into the `data` field.
+other `indexed` parameters called `topics`. The rest of the payload goes
+into the `data` field.
 
 ```js
 event Transfer(address indexed from, address indexed to, uint256 value)
@@ -27,7 +36,7 @@ keccak_hash("Transfer(address,address,uint256)")
 
 ---
 
-# Application Binary Interface
+## Application Binary Interface
 
 Parameter names are excluded from the event signature, so are their
 `indexed` designations. To know where to get the values from the
@@ -51,7 +60,7 @@ payload: from `topic` fields or from `data`, we need the contract's ABI.
 
 ---
 
-# Decode events
+## Decode events
 
 We can decode an event payload if we know the emitting contract's ABI.
 We lookup the event's inputs by its signature in `topic0` and find that
@@ -74,16 +83,16 @@ This is a `Transfer` of `0.3899064` of ERC20 token
 
 ---
 
-# Identify contracts
+## Identify contracts
 
 It helps to know what the emitting contract at address
 `0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2` is in fact WETH "Wrapped
-Ether". This information is not on chain (and neither is its ABI) but is
-available from Etherscan where it is usually crowd sourced. We can
+Ether". This information is not stored on chain (and neither is its ABI)
+but is available from Etherscan where it was crowd sourced. We can
 identify contracts by names like `WETH` or `Swap` and labels like
 `ERC20` for protocol, `aave` for application or `dex` for sector. We can
 decode events when its ABI is publicly available, or after it's been
-submitted by a user, thus the vast majority of events can be decoded and
+submitted by a user. Thus the vast majority of events can be decoded and
 identified. So far we know:
 
 - 14k Unique event ABIs 
@@ -93,7 +102,7 @@ identified. So far we know:
 
 ---
 
-# Store raw events
+## Store raw events
 
 We index everything: capture all events and store them in their raw
 undecoded format in one table.
@@ -120,18 +129,18 @@ traditional ETL which would capture events (extract), decode them
 
 ---
 
-# Query and decode events
+## Query and decode events
 
 We put the logic to decode event payloads into database views. There's
 one such view for every unique event signature like `Transfer(address
 indexed from, address indexed to, uint256 value)` (not the signature
 hash like `0xddf252ad...`).
 
-The view `Transfer_address_from_address_to_uint256_tokenId` selects all
-`Transfer` events of all ERC20 tokens. It queries the `logs` table for
-events matching its signature hash and decodes their payloads with
-functions like `to_address` and `to_uint256`, according to each
-parameter type:
+The **event view** `Transfer_address_from_address_to_uint256_tokenId`
+selects all `Transfer` events of all ERC20 tokens. It queries the `logs`
+table for events matching its signature hash and decodes their payloads
+with functions like `to_address` and `to_uint256`, according to the type
+of every parameter:
 
 ```sql
 create or replace view event."Transfer_address_from_address_to_uint256_value_d" 
@@ -144,7 +153,7 @@ from data.logs where topics[0] = '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4
 
 ---
 
-# Event views
+## Event views
 
 Querying views named after events like
 
@@ -173,12 +182,12 @@ decoded from hex:
 
 ---
 
-# Event view differences
+## Event view differences
 
 A similar view for ERC721 `Transfer`s is different despite having the
-same signature hash passed as `topic0='0xddf252ad...`. The difference is
-in the parameter name `tokenId` vs `value` in ERC20, and the fact that
-it's indexed and comes from `topic3` in ERC721 not from `data` in ERC20.
+same signature hash `topic0='0xddf252ad...`. The difference is in the
+parameter name `tokenId` vs `value` in ERC20, and the fact that it's
+indexed and comes from `topic3` in ERC721 not from `data` in ERC20.
 
 ```sql
 create or replace view event."Transfer_address_from_address_to_uint256_tokenId" 
@@ -189,13 +198,13 @@ from data.logs where topics[0] = '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4
 ```
 
 Note the ERC20 view name
-`Transfer_address_from_address_to_uint256_value_d` reflects this
-difference with ERC721's
+`Transfer_address_from_address_to_uint256_value_d` 
+reflects this difference with ERC721's
 `Transfer_address_from_address_to_uint256_tokenId`.
 
 ---
 
-# Contract views
+## Contract views
 
 To query for `Transfer`s of a specific token, you need to filter by the
 token's contract address (WETH in this case):
@@ -207,7 +216,7 @@ where contract_address = '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2'
 
 This works but you'd need to remember token addresses, while it's more
 convenient to use names of contracts when they're known. For these named
-contracts we create contract views:
+contracts we create **contract views**:
 
 ```sql
 select * from erc20.weth_evt_Transfer
@@ -219,7 +228,7 @@ WETH's contract address `0xc02aaa39...`.
 
 ---
 
-# Contract views cover many contracts
+## Contract views cover many contracts
   
 Just like an event view selects events of many contracts, a contract
 view can select events of many contracts as well, like
@@ -233,7 +242,7 @@ We have about 504k contracts which are named and labelled.
 
 ---
 
-# Contract schemas
+## Contract schemas
 
 Many contracts known to us by their names also have labels either by the
 project they belong to like `aave`, or their standard like `erc20`. To
@@ -249,13 +258,13 @@ Note that contracts named `AAVEToken` are ERC20 and can also be found in
 `erc20` schema: `erc20."AAVEToken_evt_Transfer"`. 
 
 Contracts can have multiple labels and their views can be found in 
-several schemas.
+multiple schemas.
 
 ---
 
-# Discover events and contracts
+## Discover events and contracts
 
-Overall we have about 
+Overall we have 
 
 - 14k event views in `event` schema (like
   `Transfer_address_from_address_to_uint256_value_d`)
