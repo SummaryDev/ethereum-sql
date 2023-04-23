@@ -6,7 +6,7 @@ keywords: ethereum,duckdb,query,events
 url: https://summary.dev
 ---
 
-# How we query for blockchain data
+# How we query blockchain data
 
 We make a case for serving blockchain data in files of a public dataset
 and analyzing it locally on the end user's computer.

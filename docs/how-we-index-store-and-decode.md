@@ -8,10 +8,9 @@ url: https://summary.dev
 
 # How we index, store and decode blockchain data
 
-We explain the techniques we at **summary.dev** employ to index and 
-decode Ethereum events and make a case for an extract-load-transform
-process that preserves captured data and leaves flexibility to interpret
-it.
+Explain the techniques we at **summary.dev** employ to index and decode
+Ethereum events, and make a case for an extract-load-transform process
+that preserves captured data and leaves the flexibility to interpret it.
 
 ---
 
@@ -204,6 +203,14 @@ reflects this difference with ERC721's
 
 ---
 
+## Event views in SQL editor
+
+Event views and their columns are discoverable in the list of tables.
+
+![bg right](images/redash-event-views.png)
+
+---
+
 ## Contract views
 
 To query for `Transfer`s of a specific token, you need to filter by the
@@ -262,9 +269,18 @@ multiple schemas.
 
 ---
 
+## Contract views in SQL editor
+
+Contract views and their columns are discoverable in the list of
+tables.
+
+![bg right](images/redash-contract-views.png)
+
+---
+
 ## Discover events and contracts
 
-Overall we have 
+We have 
 
 - 14k event views in `event` schema (like
   `Transfer_address_from_address_to_uint256_value_d`)
@@ -277,6 +293,31 @@ labelled.
   
 These abstractions on top of the raw event `logs` table help greatly to
 discover contracts and their events.
+
+---
+
+## SQL Editor
+
+We open access to blockchain data via popular Business Intelligence
+tools like Redash with a convenient SQL Editor.
+
+![bg right](images/redash.png)
+
+---
+
+## Charts
+
+Build charts from query results.
+
+![bg right](images/redash-pie-chart.png)
+
+---
+
+## Dashboards
+
+Build dashboards from charts.
+
+![bg right](images/redash-dashboard.png)
 
 
 
