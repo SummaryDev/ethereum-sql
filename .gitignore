@@ -9,3 +9,7 @@ duckdb
 docs/*.pptx
 docs/*.pdf
 docs/*.html
+# Rill
+*.db
+*.db.wal
+data/

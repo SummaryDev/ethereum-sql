@@ -294,31 +294,6 @@ labelled.
 These abstractions on top of the raw event `logs` table help greatly to
 discover contracts and their events.
 
----
-
-## SQL Editor
-
-We open access to blockchain data via popular Business Intelligence
-tools like Redash with a convenient SQL Editor.
-
-![bg right](images/redash.png)
-
----
-
-## Charts
-
-Build charts from query results.
-
-![bg right](images/redash-pie-chart.png)
-
----
-
-## Dashboards
-
-Build dashboards from charts.
-
-![bg right](images/redash-dashboard.png)
-
 
 
   

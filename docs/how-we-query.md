@@ -190,30 +190,3 @@ where date >= '2023-01-01'
 This query creates a local table `weth_transfer_2023` with `Transfer`
 events of WETH token in 2023. This filter is more narrow so the download
 will be faster.
-
----
-
-## Packaging options
-
-We see three ways we can package our query tool:
-
-- **cli**: one executable file with no dependencies
-- **GUI** app based on an open source Rill: sql editor and charts
-- **browser**: DuckDb can compile into wasm and load into a web page or a 
-  browser extension
-
----
-
-## Using the browser
-
-We can compile DuckDb into **wasm** and run queries in the browser. A
-web page loaded in the browser hosts the sql editor. The queries are
-executed using local compute resources over a subset of data hosted on a
-web server. To the end user the experience is similar to using a web
-interface in a typical client-server setup, and may be preferred to
-installing and running a cli.
-
-The only drawback is inability to download the data files locally. This
-is the limitation of the browser that may be overcome in the future;
-another options is a browser extension which has access to local disk
-and can download and store files.
