@@ -4,14 +4,15 @@ description: Explanation of how summary.dev provides access to blockchain data.
 author: Oleg Abdrashitov
 keywords: ethereum,indexing,events,sql,charts,dashboards
 url: https://summary.dev
+paginate: true
+headingDivider: 2
+header: '[summary.dev](https://summary.dev)'
 ---
 
 # How we access blockchain data
 
-Show how **summary.dev** gives access to blockchain data with SQL
-queries and visualizations.
-
----
+Show how **summary.dev** gives access to blockchain data with SQL and
+GraphQL and builds charts and dashboards.
 
 ## Packaging options
 
@@ -21,8 +22,6 @@ We see three ways we can package our query tool:
 - **GUI** app based on an open source Rill: sql editor and charts
 - **browser**: DuckDb can compile into wasm and load into a web page or a 
   browser extension
-
----
 
 ## Using the browser
 
@@ -38,8 +37,6 @@ is the limitation of the browser that may be overcome in the future;
 another options is a browser extension which has access to local disk
 and can download and store files.
 
----
-
 ## Command line
 
 CLI query tool provides a quick way to query blockchain data with SQL.
@@ -47,8 +44,6 @@ It can query parquet files on a remote server and on the local disk, and
 query tables in the local database.
 
 ![bg fit right](images/cli.png)
-
----
 
 ## Rill
 
@@ -58,8 +53,6 @@ query tables in the local database.
 
 ![bg fit right](images/rill.png)
 
----
-
 ## SQL Editor
 
 We open access to blockchain data via popular Business Intelligence
@@ -67,7 +60,17 @@ tools like Redash with a convenient SQL Editor.
 
 ![bg fit right](images/redash.png)
 
----
+## Query via API
+
+Access query results via an http call by your script or app.
+
+![bg fit right](images/redash-api-key.png)
+
+## Query results from the API
+
+Response is in json or csv.
+
+![bg fit right](images/redash-api-response-json.png)
 
 ## Charts
 
@@ -75,29 +78,28 @@ Build charts from query results.
 
 ![bg fit right](images/redash-pie-chart.png)
 
----
-
 ## Dashboards
 
 Build dashboards from charts.
 
 ![bg fit right](images/redash-dashboard.png)
 
----
-
 ## GraphQL
 
-We run an endpoint where you can query events with GraphQL either
-manually with a web interface or via an http call.
+Query events with GraphQL from a web interface.
 
 ![bg fit right](images/graphql-logs-request.png)
 
----
+## GraphQL response
+
+GraphQL response comes in json and contains the same data as in the
+response from a SQL query with the same filter.
+
+![bg fit right](images/graphql-logs-response.png)
 
 ## GraphQL via http
 
-The same GraphQL query can be sent via an http post by your script
-or app.
+GraphQL queries can be sent via an http post by your script or app.
 
 ```bash
 curl 'https://graphile-ethereum.dev.summary.dev/graphql' 
@@ -114,17 +116,6 @@ afterTimestamp: \"2023-01-01\")
 
 ![bg fit right](images/graphql-logs-request-http.png)
 
----
-
-## GraphQL response
-
-GraphQL response comes in json and contains the same data as in the
-response from a SQL query with the same filter.
-
-![bg fit right](images/graphql-logs-response.png)
-
----
-
 ## Explore event definitions with GraphQL
 
 Query with GraphQL for labels, contracts and event definitions with a
@@ -132,14 +123,8 @@ tree explorer.
 
 ![bg fit right](images/graphql-abi-request.png)
 
----
-
 ## Event definitions response
 
 Discover events, their signatures and ABI definitions.
 
 ![bg fit right](images/graphql-abi-response.png)
-
-
-
-  

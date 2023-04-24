@@ -4,14 +4,15 @@ description: Explanation of how summary.dev uses DuckDb to query blockchain data
 author: Oleg Abdrashitov
 keywords: ethereum,duckdb,query,events
 url: https://summary.dev
+paginate: true
+headingDivider: 2
+header: '[summary.dev](https://summary.dev)'
 ---
 
 # How we query blockchain data
 
 We make a case for serving blockchain data in files of a public dataset
 and analyzing it locally on the end user's computer.
-
----
 
 ## Existing client-server solutions
 
@@ -24,8 +25,6 @@ We at **summary.dev** also started with this client-server architecture
 around Amazon Redshift database, but soon realized there is a better
 way.
 
----
-
 ## What's specific about blockchain data
 
 - All data is public. We don't need user management and access control.
@@ -37,7 +36,6 @@ way.
   We can partition data by them:
   -    event signatures (aka topic0)
      - ranges of dates
----
 
 ## Why use databases?
 
@@ -52,8 +50,6 @@ way.
   tool to analyze it locally?
 - If the data can be partitioned can we bring only the slice of data the
   user is interested in, like specific events over given date range?
-
----
 
 ## The answer is DuckDb, Parquet and partitioning
 
@@ -70,8 +66,6 @@ and its subfolders with specific dates.
 
 The user then queries the files he downloaded with a query tool
 optimized for blockchain data with an embedded OLAP library **DuckDb**.
-
----
 
 ## Partitioning
 
@@ -93,7 +87,6 @@ topic0=0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef/2023-0
                                                                          /2023-01-02/*.parquet
                                                                          /2023-01-03/*.parquet
 ```
----
 
 ## Partitioning logic in views
 
@@ -114,7 +107,6 @@ address contract_address
 from parquet_scan('./topic0=0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef/*/*',
 hive_partitioning=1);
 ```
----
 
 ## Selecting from event views for partitioned files
 
@@ -129,8 +121,6 @@ where date between '2023-01-01' and '2023-01-03';
 And translates into a scan of parquet files in folder
 `topic0=0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef`
 and its 3 subfolders, each for every date in the given date range.
-
----
 
 ## Querying remotely
 
@@ -155,8 +145,6 @@ skipping files with other events and dates. However, this query will
 bring in data only temporarily. Subsequent queries will need to download
 again. Such remote access may be suitable for ad hoc queries.
 
----
-
 ## Querying locally
 
 For more frequent queries it makes sense to first download the data.
@@ -173,8 +161,6 @@ This will download all ERC20 `Transfer` events of 2023 into a local
 table `erc20_transfer_2023`. Queries against this table will read the
 local database file and will be very fast. However, the initial download
 may take some time.
-
----
 
 ## Querying locally with contract views
 

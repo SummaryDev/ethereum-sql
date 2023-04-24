@@ -4,6 +4,9 @@ description: Explanation of the ELT method summary.dev employs to index Ethereum
 author: Oleg Abdrashitov
 keywords: ethereum,indexing,events
 url: https://summary.dev
+paginate: true
+headingDivider: 2
+header: '[summary.dev](https://summary.dev)'
 ---
 
 # How we index, store and decode blockchain data
@@ -11,8 +14,6 @@ url: https://summary.dev
 Explain the techniques we at **summary.dev** employ to index and decode
 Ethereum events, and make a case for an extract-load-transform process
 that preserves captured data and leaves the flexibility to interpret it.
-
----
 
 ## Events in Ethereum
 
@@ -32,8 +33,6 @@ Event signature is a hash of its name and parameter types.
 keccak_hash("Transfer(address,address,uint256)")
 ="0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"
 ```
-
----
 
 ## Application Binary Interface
 
@@ -57,8 +56,6 @@ payload: from `topic` fields or from `data`, we need the contract's ABI.
 "type": "event"
 ```
 
----
-
 ## Decode events
 
 We can decode an event payload if we know the emitting contract's ABI.
@@ -80,8 +77,6 @@ This is a `Transfer` of `0.3899064` of ERC20 token
 `0x00000000a991c429ee2ec6df19d40fe0c80088b8` to
 `0xd21ab387f22d4ccb88fe8a139cd60a977706e493`.
 
----
-
 ## Identify contracts
 
 It helps to know what the emitting contract at address
@@ -98,8 +93,6 @@ identified. So far we know:
 - 88k Event signatures
 - 504k Named contracts
 - 3k Contract labels 
-
----
 
 ## Store raw events
 
@@ -126,8 +119,6 @@ traditional ETL which would capture events (extract), decode them
 (transform) and store into individual tables with different schemas
 (load).
 
----
-
 ## Query and decode events
 
 We put the logic to decode event payloads into database views. There's
@@ -149,8 +140,6 @@ to_uint256(2,data::text) "value",
 address contract_address 
 from data.logs where topics[0] = '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef';
 ```
-
----
 
 ## Event views
 
@@ -179,8 +168,6 @@ decoded from hex:
 └────────────────────────────────────────────┴────────────────────────────────────────────┴─────────────────────┴────────────────────────────────────────────┘
 ```
 
----
-
 ## Event view differences
 
 A similar view for ERC721 `Transfer`s is different despite having the
@@ -201,15 +188,11 @@ Note the ERC20 view name
 reflects this difference with ERC721's
 `Transfer_address_from_address_to_uint256_tokenId`.
 
----
-
 ## Event views in SQL editor
 
 Event views and their columns are discoverable in the list of tables.
 
 ![bg fit right](images/redash-event-views.png)
-
----
 
 ## Contract views
 
@@ -233,8 +216,6 @@ will select and decode WETH `Transfer`s with the help of
 `Transfer_address_from_address_to_uint256_value_d` filtered by
 WETH's contract address `0xc02aaa39...`.
 
----
-
 ## Contract views cover many contracts
   
 Just like an event view selects events of many contracts, a contract
@@ -246,8 +227,6 @@ Some contract views select only one specific contract, like
 `erc20.weth_evt_Transfer` for the only WETH token.
 
 We have about 504k contracts which are named and labelled.
-
----
 
 ## Contract schemas
 
@@ -267,16 +246,12 @@ Note that contracts named `AAVEToken` are ERC20 and can also be found in
 Contracts can have multiple labels and their views can be found in 
 multiple schemas.
 
----
-
 ## Contract views in SQL editor
 
 Contract views and their columns are discoverable in the list of
 tables.
 
 ![bg fit right](images/redash-contract-views.png)
-
----
 
 ## Discover events and contracts
 
@@ -293,7 +268,3 @@ labelled.
   
 These abstractions on top of the raw event `logs` table help greatly to
 discover contracts and their events.
-
-
-
-  
