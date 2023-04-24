@@ -46,7 +46,7 @@ CLI query tool provides a quick way to query blockchain data with SQL.
 It can query parquet files on a remote server and on the local disk, and
 query tables in the local database.
 
-![bg right](images/cli.png)
+![bg fit right](images/cli.png)
 
 ---
 
@@ -56,7 +56,7 @@ CLI query tool provides a quick way to query blockchain data with SQL.
 It can query parquet files on a remote server and on the local disk, and
 query tables in the local database.
 
-![bg right](images/rill.png)
+![bg fit right](images/rill.png)
 
 ---
 
@@ -65,7 +65,7 @@ query tables in the local database.
 We open access to blockchain data via popular Business Intelligence
 tools like Redash with a convenient SQL Editor.
 
-![bg right](images/redash.png)
+![bg fit right](images/redash.png)
 
 ---
 
@@ -73,7 +73,7 @@ tools like Redash with a convenient SQL Editor.
 
 Build charts from query results.
 
-![bg right](images/redash-pie-chart.png)
+![bg fit right](images/redash-pie-chart.png)
 
 ---
 
@@ -81,7 +81,7 @@ Build charts from query results.
 
 Build dashboards from charts.
 
-![bg right](images/redash-dashboard.png)
+![bg fit right](images/redash-dashboard.png)
 
 
 

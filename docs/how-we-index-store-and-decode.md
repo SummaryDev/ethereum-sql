@@ -207,7 +207,7 @@ reflects this difference with ERC721's
 
 Event views and their columns are discoverable in the list of tables.
 
-![bg right](images/redash-event-views.png)
+![bg fit right](images/redash-event-views.png)
 
 ---
 
@@ -274,7 +274,7 @@ multiple schemas.
 Contract views and their columns are discoverable in the list of
 tables.
 
-![bg right](images/redash-contract-views.png)
+![bg fit right](images/redash-contract-views.png)
 
 ---
 
