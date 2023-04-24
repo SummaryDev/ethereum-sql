@@ -83,6 +83,63 @@ Build dashboards from charts.
 
 ![bg fit right](images/redash-dashboard.png)
 
+---
+
+## GraphQL
+
+We run an endpoint where you can query events with GraphQL either
+manually with a web interface or via an http call.
+
+![bg fit right](images/graphql-logs-request.png)
+
+---
+
+## GraphQL via http
+
+The same GraphQL query can be sent via an http post by your script
+or app.
+
+```bash
+curl 'https://graphile-ethereum.dev.summary.dev/graphql' 
+-H 'content-type: application/json' 
+--data-raw '{"query":"query AAVEToken_logs { 
+contract(address: \"0x7fc66500c84a76ad7e9c93437bfc5ac33e2ddae9\") 
+{ label name 
+logs(first: 10, 
+beforeTimestamp: \"2023-01-10\", 
+afterTimestamp: \"2023-01-01\") 
+{ name payload transactionHash logIndex blockTimestamp blockNumber } } }",
+"operationName":"AAVEToken_logs"}'
+```
+
+![bg fit right](images/graphql-logs-request-http.png)
+
+---
+
+## GraphQL response
+
+GraphQL response comes in json and contains the same data as in the
+response from a SQL query with the same filter.
+
+![bg fit right](images/graphql-logs-response.png)
+
+---
+
+## Explore event definitions with GraphQL
+
+Query with GraphQL for labels, contracts and event definitions with a
+tree explorer.
+
+![bg fit right](images/graphql-abi-request.png)
+
+---
+
+## Event definitions response
+
+Discover events, their signatures and ABI definitions.
+
+![bg fit right](images/graphql-abi-response.png)
+
 
 
   
