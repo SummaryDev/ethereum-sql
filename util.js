@@ -108,7 +108,7 @@ export function writeSqlViewFilesFromAbis(labels, contracts, events, abis, contr
   const fileEventView = fs.createWriteStream(`${folder}/${name}-create-event-view.sql`, {flags: 'w'})
   fileEventView.write('drop schema event cascade;\ncreate schema event;\nset search_path to public;\n')
   abis.forEach(v => {
-    fileEventView.write(`create or replace view event."${v.table_name}" as select ${v.unpack}, address contract_address, transaction_hash evt_tx_hash, log_index evt_index, block_timestamp evt_block_time, block_number evt_block_number from data.logs where topics[0] = '${v.hash}';\n`)
+    fileEventView.write(`create or replace view event."${v.table_name}" as select ${v.unpack}, address contract_address, transaction_hash evt_tx_hash, log_index evt_index, block_timestamp evt_block_time, block_number evt_block_number from data.logs where topic0 = '${v.hash}';\n`)
   })
   fileEventView.end()
 
@@ -132,7 +132,7 @@ export function contractEventTableName(label, contract_name, abi_name) {
 }
 
 export function writeSqlViewFilesFromSignatures(records, name) {
-  const sqlCreateView = records.map(o => `create or replace view events.${eventTableName(o.signature)} as select address, transaction_hash, block_timestamp, date, ${o.unpack} from eth.logs where topics[0] = '${o.hash}'`).join(';\n')
+  const sqlCreateView = records.map(o => `create or replace view events.${eventTableName(o.signature)} as select address, transaction_hash, block_timestamp, date, ${o.unpack} from data.logs where topic0 = '${o.hash}'`).join(';\n')
 
   fs.writeFileSync(`${folder}/${name}-create-event-view.sql`, ['set search_path to public', sqlCreateView].join(';\n'))
 }
