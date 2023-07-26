@@ -13,3 +13,4 @@ docs/*.html
 *.db
 *.db.wal
 data/
+.duckdb_history
