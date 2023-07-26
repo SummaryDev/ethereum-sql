@@ -1,6 +1,6 @@
 import * as fs from 'fs';
-import {parseEventAbi} from './parse-abi.js';
-import {fromDir, writeCsvFiles, writeSqlViewFilesFromAbis, contractEventTableName} from './util.js';
+import {parseEventAbiWithLabels} from './parse-abi.js';
+import {fromDir, writeCsvFiles, writeSqlViewFilesFromAbis} from './util.js';
 import JSONStream from 'JSONStream';
 
 function parseDuneFilesForEvents() {
@@ -24,63 +24,11 @@ function parseDuneFilesForEvents() {
     const p = new Promise((resolve, reject) => {
 
       jsonStream.on('data', d => {
-        if (!d.abi) {
-          console.warn(`skipping record for missing abi in ${JSON.stringify(d)}`)
-          return
-        }
 
-        if (!d.address) {
-          console.warn(`skipping record for missing address in ${JSON.stringify(d)}`)
-          return
-        }
-
-        if (!d.namespace) {
-          console.warn(`skipping record for missing namespace in ${JSON.stringify(d)}`)
-          return
-        }
-
-        if (!d.name) {
-          console.warn(`skipping record for missing name in ${JSON.stringify(d)}`)
-          return
-        }
-
-        if (d.address.length !== 42) {
-          console.warn(`skipping record ${d.address} for address length ${d.address.length}`)
-          return
-        }
+        parseEventAbiWithLabels(d, labels, contracts, abis, events, contractEvents)
 
         countRecords++
 
-        labels.add(d.namespace)
-
-        const address = d.address.replace('\\', '0')
-
-        contracts.set(address, {
-          label: d.namespace,
-          name: d.name
-        })
-
-        const dabis = d.abi.filter(o => o.type === 'event' && !o.anonymous && o.inputs && o.inputs.length > 0)
-
-        for (const a of dabis) {
-          const abi = parseEventAbi(a)
-
-          if (abi) {
-            abis.set(abi.signature, abi)
-
-            events.add(JSON.stringify({
-              contract_address: address,
-              abi_signature: abi.signature,
-            }))
-
-            contractEvents.set(contractEventTableName(d.namespace, d.name, abi.name), {
-              contract_label: d.namespace,
-              contract_name: d.name,
-              abi_signature: abi.signature,
-              abi_table_name: abi.table_name,
-            })
-          }
-        }
       }).on('end', () => {
         const m = `read ${countRecords} records from ${filename}`
         console.log(m)
