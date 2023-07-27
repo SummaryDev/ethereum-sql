@@ -1,9 +1,11 @@
+-- noinspection SqlNoDataSourceInspectionForFile
+
 /*
 playground to manually test abi decoding defined in functions.sql
 
 https://github.com/web3/web3.js/blob/1.x/test/abi.decodeParameter.js
  */
-
+--                '0000111122223333444455556666777788889999aaaabbbbccccddddeeeeffff'
 select to_part(0, '000000000000000000000000000000004B3B4CA85A86C47A098A223FFFFFFFFF', 0, 32); -- FFFFFFFF
 select to_part(0, '000000000000000000000000000000004B3B4CA85A86C47A098A223FFFFFFFFF', 1, 32); -- 098A223F
 select to_part(0, '000000000000000000000000000000004B3B4CA85A86C47A098A223FFFFFFFFF', 2, 32); -- 5A86C47A

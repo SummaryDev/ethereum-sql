@@ -1,6 +1,6 @@
 /*
 library of functions to decode abi encoded data https://docs.soliditylang.org/en/develop/abi-spec.html
-uses lower level functions created for redshift or another db
+uses lower level functions created for redshift or postgres
  */
 
 set search_path to public;
@@ -85,7 +85,7 @@ select case
        when $3 = 'int64' then to_int64($1, $2)::text
        when $3 = 'uint64' then to_uint64($1, $2)::text
        when $3 = 'uint128' then to_uint128($1, $2)::text
-       when $3 = 'decimal' then to_decimal($1, $2)::text
+--        when $3 = 'decimal' then to_decimal($1, $2)::text todo where do we use decimal type?
        when $3 = 'bool' then case when to_bool($1, $2) then 'true' else 'false' end
        else quote_ident(substring($2, $1+1, 64))
        end

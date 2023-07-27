@@ -4,14 +4,12 @@ but missing on the latest postgres https://www.postgresql.org/docs/current/funct
 to keep functions.sql uniform across postgres and redshift
  */
 
---drop function to_int64 (pos int, data text);
+set search_path to public;
 
 create or replace function to_int64 (pos int, data text) returns bigint immutable
 as $$
 select concat('x', substring(lpad($2, 64, '0'), $1+49, 16))::bit(64)::bigint
 $$ language sql;
-
--- drop function to_uint64 (pos int, data text);
 
 create or replace function to_uint64 (pos int, data text) returns dec immutable
 as $$
@@ -23,11 +21,21 @@ as $$
 select concat('x', substring(lpad($2, 64, '0'), $1+57, 8))::bit(32)::bigint
 $$ language sql;
 
---drop function to_int128 (pos int, data text)
+--todo test it
+create or replace function to_int32 (pos int, data text) returns bigint immutable
+as $$
+select to_int32($1, $2)
+$$ language sql;
 
 create or replace function to_uint128 (pos int, data text) returns dec immutable
 as $$
 select concat('x', substring(lpad($2, 64, '0'), $1+33, 8))::bit(32)::bigint::dec*4294967296*4294967296*4294967296 + concat('x', substring(lpad($2, 64, '0'), $1+41, 8))::bit(32)::bigint::dec*4294967296*4294967296 + concat('x', substring(lpad($2, 64, '0'), $1+49, 8))::bit(32)::bigint::dec*4294967296 + concat('x', substring(lpad($2, 64, '0'), $1+57, 8))::bit(32)::bigint::dec
+$$ language sql;
+
+--todo don't downshift to_uint256 to to_uint128
+create or replace function to_uint256 (pos int, data text) returns dec immutable
+as $$
+select to_uint128 ($1, $2)
 $$ language sql;
 
 create or replace function strtol (data text, bits int) returns bigint immutable
@@ -53,7 +61,7 @@ $$ language sql;
 useful for testing but not used in the library
 https://stackoverflow.com/questions/33486595/postgresql-convert-hex-string-of-a-very-large-number-to-a-numeric/54130287#54130287
  */
-create or replace function hex_to_numeric(str text)
+/*create or replace function hex_to_numeric(str text)
 returns numeric
 language plpgsql immutable strict as $$
 declare
@@ -72,7 +80,7 @@ begin
         raise notice '% % %', p, d, res;
     end loop;
     return res;
-end $$;
+end $$;*/
 
 /*select hex_to_numeric('0000000000000000000000000000000000000000000000010000000000000000');
 select hex_to_numeric('000000000000000000000000000000000000000000000001ffffffffffffffff');
