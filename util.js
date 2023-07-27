@@ -95,7 +95,7 @@ export function writeCsvFiles(labels, contracts, events, abis, name) {
 export function writeSqlViewFilesFromAbis(labels, contracts, events, abis, contractEvents, name) {
   const fileCreateLabel = fs.createWriteStream(`${folder}/${name}-create-label-schema.sql`, {flags: 'w'})
   labels.forEach(a => {
-    fileCreateLabel.write(`create schema "${a}";\n`)
+    fileCreateLabel.write(`drop schema "${a}" cascade;\ncreate schema "${a}";\n`)
   })
   fileCreateLabel.end()
 
@@ -114,7 +114,8 @@ export function writeSqlViewFilesFromAbis(labels, contracts, events, abis, contr
 
   const fileContractView = fs.createWriteStream(`${folder}/${name}-create-contract-view.sql`, {flags: 'w'})
   contractEvents.forEach((v, k) => {
-    fileContractView.write(`create or replace view ${k} as select v.* from event."${v.abi_table_name}" v left join metadata.event e on e.contract_address = v.contract_address left join metadata.contract c on e.contract_address = c.address where e.abi_signature = '${v.abi_signature}' and c.label = '${v.contract_label}' and c.name = '${v.contract_name}';\n`)
+    //todo instead of comparing with lower(), lowercase all contract addresses at the insert
+    fileContractView.write(`create or replace view ${k} as select v.* from event."${v.abi_table_name}" v left join metadata.event e on lower(e.contract_address) = lower(v.contract_address) left join metadata.contract c on lower(e.contract_address) = lower(c.address) where e.abi_signature = '${v.abi_signature}' and c.label = '${v.contract_label}' and c.name = '${v.contract_name}';\n`)
   })
   fileContractView.end()
 }
