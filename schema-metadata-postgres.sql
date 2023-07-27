@@ -1,22 +1,23 @@
+-- this schema metadata is for labels, contracts, event definitions and their abis
+-- schema event is for decoded events like event.Transfer
+-- schema data is for raw undecoded records received from an rpc node like logs, transactions, blocks, traces
+-- other schemas will be created as namespaces to hold views per contract like erc20, aave, beamswap
 
-create schema if not exists metadata;
+drop schema if exists metadata cascade;
+create schema metadata;
 set search_path to metadata;
 
-drop table if exists label cascade;
 create table label (name text primary key);
 
-drop table if exists contract cascade;
 create table contract (address text primary key, name text, label text references label);
 create index on contract (label);
 create index on contract (name);
 
-drop table if exists abi cascade;
 create table abi (signature text primary key, name text not null, hash text not null, unpack text not null, json text not null, canonical text not null, table_name text not null);
 create index on abi (hash);
 create index on abi (name);
 create index on abi (canonical);
 
-drop table if exists event cascade;
 create table event (contract_address text references contract, abi_signature text references abi, primary key (contract_address, abi_signature));
 create index on event (contract_address);
 create index on event (abi_signature);
