@@ -96,6 +96,9 @@ export function writeSqlViewFilesFromAbis(labels, contracts, events, abis, contr
   const fileCreateLabel = fs.createWriteStream(`${folder}/${name}-create-label-schema.sql`, {flags: 'w'})
   labels.forEach(a => {
     fileCreateLabel.write(`drop schema "${a}" cascade;\ncreate schema "${a}";\n`)
+    fileCreateLabel.write(`grant usage on schema "${a}" to redash;\n`)
+    // fileCreateLabel.write(`grant select on all tables in schema "${a}" to redash;\n`)
+    fileCreateLabel.write(`alter default privileges in schema "${a}" grant select on tables to redash;\n`)
   })
   fileCreateLabel.end()
 
@@ -107,6 +110,8 @@ export function writeSqlViewFilesFromAbis(labels, contracts, events, abis, contr
 
   const fileEventView = fs.createWriteStream(`${folder}/${name}-create-event-view.sql`, {flags: 'w'})
   fileEventView.write('drop schema event cascade;\ncreate schema event;\nset search_path to public;\n')
+  fileEventView.write(`grant usage on schema event to redash;\n`)
+  fileEventView.write(`alter default privileges in schema event grant select on tables to redash;\n`)
   abis.forEach(v => {
     fileEventView.write(`create or replace view event."${v.table_name}" as select ${v.unpack}, address contract_address, transaction_hash evt_tx_hash, log_index evt_index, block_timestamp evt_block_time, block_number evt_block_number from data.logs where topic0 = '${v.hash}';\n`)
   })

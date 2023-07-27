@@ -33,3 +33,6 @@ comment on constraint event_contract_address_fkey on event is E'@fieldName contr
 -- comment on constraint contract_label_fkey on contract is null;
 -- comment on constraint event_abi_signature_fkey on event is null;
 -- comment on constraint event_contract_address_fkey on event is null;
+
+grant usage on schema metadata to redash;
+grant select on all tables in schema metadata to redash;

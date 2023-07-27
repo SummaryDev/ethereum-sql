@@ -6,6 +6,8 @@ function info() {
     echo
 }
 
+# export namespace=prod && export evm_chain=moonbeam && export evm_network=mainnet
+
 
 info "generate metadata"
 
