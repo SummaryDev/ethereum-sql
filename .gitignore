@@ -14,3 +14,7 @@ docs/*.html
 *.db.wal
 data/
 .duckdb_history
+*.duckdb
+dashboards
+models
+sources
