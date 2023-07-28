@@ -13,7 +13,7 @@ function parseAbiFilesForEvents() {
   const abis = new Map()
   const contractEvents = new Map()
 
-  fromDir(`./data/${project}`, /.json$/, filename => {
+  fromDir(`./input/${project}`, /.json$/, filename => {
     console.log(filename)
 
     const contractAddress = filename.substr(filename.lastIndexOf('/')+1, 42)

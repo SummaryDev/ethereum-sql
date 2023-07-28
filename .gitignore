@@ -4,7 +4,8 @@ node_modules
 data
 metadata
 .idea
-scratch*json
+.vscode
+scratch*
 duckdb
 docs/*.pptx
 docs/*.pdf
@@ -19,4 +20,3 @@ dashboards
 models
 sources
 rill.yaml
-scratch.txt
