@@ -6,7 +6,7 @@ export const supportedTypesDict = {
   'address': {'function': 'to_address', 'args': [], 'type': 'text'},
   'uint256': {'function': 'to_uint256', 'args': [], 'type': 'decimal'},
   'address[]': {'function': 'to_array', 'args': ['\'address\''], 'type': 'text'}, // todo what should be the result column type of arrays? not text but super or array?
-  'uint256[]': {'function': 'to_array', 'args': ['\'to_uint256\''], 'type': 'text'},
+  'uint256[]': {'function': 'to_array', 'args': ['\'uint256\''], 'type': 'text'},
   'string[]': {'function': 'to_array', 'args': ['\'string\''], 'type': 'text'},
   'bytes[]': {'function': 'to_array', 'args': ['\'bytes\''], 'type': 'text'},
   'bool[]': {'function': 'to_array', 'args': ['\'bool\''], 'type': 'text'},
