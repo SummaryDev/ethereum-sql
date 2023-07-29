@@ -135,8 +135,8 @@ Note its full name `Transfer_address_from_address_to_uint256_value_d`
 contains its attributes as there may be other Transfer events with
 different attributes.
 
-Most deployed contracts publish their ABI in json files with data
-sufficient to interpret their logs. Our Transfer event is defined as:
+Most deployed contracts publish their ABI in json files to help 
+interpret their logs. Our Transfer event is defined as:
 
 ```json
 {
@@ -163,13 +163,110 @@ sufficient to interpret their logs. Our Transfer event is defined as:
 }
 ```
 
-From this we know the attribute *from* is of type address and comes in
-the second topic as it's *indexed* and so on. Now given a json file with
-a contract's ABI we can parse it and create view definitions for every
-event described in it. If we gather ABI files for all the contracts we
-extracted logs for we can create views for each of them and our database
-of raw logs now becomes user friendly with many views to query from,
-named by event names and producing decoded values.
+From this snippet we know the attribute *from* is of type address and
+comes in the second topic as it's *indexed* and so on. This definition
+is sufficient to create a view to decode all raw Transfer logs.
+
+We can parse an ABI file of any contract and create view definitions for
+every event described in it. If we gather ABI files for all the
+contracts we extracted logs for, we can create views for each of them
+and our database of raw logs will become very user friendly. Event views
+will have recognizable names and columns and when queried will return
+decoded values we can analyze.
+
+## Contract metadata
+
+Event views we just introduced work well to analyze events
+of contracts whose addresses we know. For example, to select Transfers
+of USDC we filter on its address we got from
+[Etherscan](https://etherscan.io/token/0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48).
+
+```sql
+select * from event.Transfer_address_from_address_to_uint256_value_d 
+where contract_address = '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48';
+```
+
+But beyond popular tokens and addresses we would also like to explore
+Dapps and the events they emit even if we don't know their
+addresses and names.
+
+There are sources like block explorers and Github repos that publish
+names and labels for contracts, usually together with their ABI files.
+These labels are better suited to navigate Dapps and their contracts:
+labels can be project names like aave, uniswap, beamswap or standards
+like erc20, erc721; contract names are descriptive like AmmFactory or
+Staking or USDT.
+
+We can gather contract names and labels from open sources and use them
+to create event views per contract, then group them into schemas named
+like their labels. For example, Transfer events of a contract identified
+as USDT and labeled erc20 can be found in a view named
+`erc20.USDT_evt_Transfer`. A great number of Dapp events can be explored
+by selecting from views like `beamswap.AmmFactoryV1_evt_PairCreated` and
+the like.
+
+Note that these *contract views* like `erc20.USDT_evt_Transfer` still
+select from *event views* like 
+`event.Transfer_address_from_address_to_uint256_value_d` but filter on a
+known contract address.
+
+## Example
+
+We can now show how to parse ABI files and contract metadata to create
+event and contract views for a Dapp [Beamswap](https://beamswap.io/)
+deployed to a Polkadot EVM parachain
+[Moonbeam](https://moonbeam.network/).
+
+Beamswap
+[publishes](https://docs.beamswap.io/developers/beamswap-contracts)
+addresses and names of its 12 smart contracts. Their ABIs can be
+downloaded from block explorer
+[Moonscan](https://moonscan.io/address/0x985BcA32293A7A496300a48081947321177a86FD#code).
+
+We added the files to this repo in [input/beamswap](./input/beamswap);
+their names are concatenations of contract addresses and names (like
+`0x2fc63231f734850c4b8c6b80c275fdb66983846fStable Pool Nomad V1.json`)
+as extra inputs to the parser. TODO there must be a better way to
+organize it.
+
+Run the parser to read the ABI files. It's a standalone js script and
+requires node.js installed.
+
+```shell
+node parse-abi-files.js
+```
+
+The parser will produce:
+
+- definitions of schemas `parse-abi-create-label-schema.sql`
+- event view definitions `parse-abi-event-view.sql`
+- contract view definitions `parse-abi-event-view.sql`
+
+Take a peek into these scripts to see the SQL statements we talked
+about.
+
+Creating event views in `event` schema.
+
+```sql
+create or replace view event."AddLiquidity_address_provider_uint256___tokenAmounts_d_uint256___fees_d_uint256_invariant_d_uint256_lpTokenSupply_d" as select to_address(2,topic1::text) "provider",to_array(2,data::text,'to_uint256') "tokenAmounts",to_array(66,data::text,'to_uint256') "fees",to_uint256(130,data::text) "invariant",to_uint256(194,data::text) "lpTokenSupply", address contract_address, transaction_hash evt_tx_hash, log_index evt_index, block_timestamp evt_block_time, block_number evt_block_number from data.logs where topic0 = '0x189c623b666b1b45b83d7178f39b8c087cb09774317ca2f53c2d3c3726f222a2';
+create or replace view event."FlashLoan_address_receiver_uint8_tokenIndex_d_uint256_amount_d_uint256_amountFee_d_uint256_protocolFee_d" as select to_address(2,topic1::text) "receiver",to_uint32(2,data::text) "tokenIndex",to_uint256(66,data::text) "amount",to_uint256(130,data::text) "amountFee",to_uint256(194,data::text) "protocolFee", address contract_address, transaction_hash evt_tx_hash, log_index evt_index, block_timestamp evt_block_time, block_number evt_block_number from data.logs where topic0 = '0x7c186b2827b23e9024e7b29869cba58a97a4bac6567802a8ea6a8afa7b8c22f0';
+create or replace view event."NewAdminFee_uint256_newAdminFee_d" as select to_uint256(2,data::text) "newAdminFee", address contract_address, transaction_hash evt_tx_hash, log_index evt_index, block_timestamp evt_block_time, block_number evt_block_number from data.logs where topic0 = '0xab599d640ca80cde2b09b128a4154a8dfe608cb80f4c9399c8b954b01fd35f38';
+```
+
+Creating contract views in `beamswap` schema.
+
+```sql
+create or replace view beamswap."StablePoolNomadV1_evt_AddLiquidity" as select v.* from event."AddLiquidity_address_provider_uint256___tokenAmounts_d_uint256___fees_d_uint256_invariant_d_uint256_lpTokenSupply_d" v left join metadata.event e on lower(e.contract_address) = lower(v.contract_address) left join metadata.contract c on lower(e.contract_address) = lower(c.address) where e.abi_signature = 'AddLiquidity(address indexed provider,uint256[] tokenAmounts,uint256[] fees,uint256 invariant,uint256 lpTokenSupply)' and c.label = 'beamswap' and c.name = 'StablePoolNomadV1';
+create or replace view beamswap."StablePoolNomadV1_evt_FlashLoan" as select v.* from event."FlashLoan_address_receiver_uint8_tokenIndex_d_uint256_amount_d_uint256_amountFee_d_uint256_protocolFee_d" v left join metadata.event e on lower(e.contract_address) = lower(v.contract_address) left join metadata.contract c on lower(e.contract_address) = lower(c.address) where e.abi_signature = 'FlashLoan(address indexed receiver,uint8 tokenIndex,uint256 amount,uint256 amountFee,uint256 protocolFee)' and c.label = 'beamswap' and c.name = 'StablePoolNomadV1';
+create or replace view beamswap."ShareTokenV1_evt_Approval" as select v.* from event."Approval_address_owner_address_spender_uint256_value_d" v left join metadata.event e on lower(e.contract_address) = lower(v.contract_address) left join metadata.contract c on lower(e.contract_address) = lower(c.address) where e.abi_signature = 'Approval(address indexed owner,address indexed spender,uint256 value)' and c.label = 'beamswap' and c.name = 'ShareTokenV1';
+create or replace view beamswap."ShareTokenV1_evt_Transfer" as select v.* from event."Transfer_address_from_address_to_uint256_value_d" v left join metadata.event e on lower(e.contract_address) = lower(v.contract_address) left join metadata.contract c on lower(e.contract_address) = lower(c.address) where e.abi_signature = 'Transfer(address indexed from,address indexed to,uint256 value)' and c.label = 'beamswap' and c.name = 'ShareTokenV1';
+create or replace view beamswap."StakingV1_evt_CycleStakingPercentUpdated" as select v.* from event."CycleStakingPercentUpdated_address_token_uint256_previousValue_d_uint256_newValue_d" v left join metadata.event e on lower(e.contract_address) = lower(v.contract_address) left join metadata.contract c on lower(e.contract_address) = lower(c.address) where e.abi_signature = 'CycleStakingPercentUpdated(address indexed token,uint256 previousValue,uint256 newValue)' and c.label = 'beamswap' and c.name = 'StakingV1';
+```
+
+
+
+
+
 
 
 
