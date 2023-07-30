@@ -1,12 +1,12 @@
 # SQL for Ethereum
 
-This repo hosts tools to help analyze data of EVM compatible blockchains
-by databases Postgres, Amazon Redshift, DuckDb.
+This repo hosts tools to help analyze data of Ethereum and other EVM
+blockchains by databases Postgres, Amazon Redshift, DuckDb.
 
-- User defined SQL functions to parse ABI encoded data emitted by smart
-contracts.
+- User defined SQL functions to decode ABI encoded data emitted by smart
+  contracts.
 - Utilities to parse ABI files to extract event metadata and create SQL
-scripts to decode onchain data.
+  scripts to query contract logs.
 
 ## ABI functions
 
@@ -17,8 +17,8 @@ attributes are encoded as hex and passed in three fields called *topics*
 and one field *data*. The first topic is a hash of the event name and
 types of its attributes.
 
-A `Transfer` event for example, carries `to`, `from` as addresses and
-`amount` as uint256, packed in a log like this:
+A *Transfer* event for example, carries *to*, *from* as addresses and
+*amount* as uint256, packed in a log like this:
 
 ```json
 {
@@ -39,15 +39,17 @@ Here
 - topic2 is `to` address `0xf78031c993afb43e79f017938326ff34418ec36e`
 - data is `value` uint256 `12309758656873032448`
 
-We store events as raw encoded logs in relational databases like
-Postgres or Redshift, or in Parquet files. Their encoded attributes
-however are impossible to analyze: we need to sum up number attributes
-and read addresses and text, so we need to decode them in our queries.
-Fortunately, databases have rich libraries of built in functions that
-can be combined into user defined functions to decode these values by
-following the ABI spec.
+We store events as raw logs in relational databases like Postgres or
+Redshift, or in Parquet files. Their encoded attributes however are hard
+to analyze. If we need to sum up numeric attributes and read addresses
+and text, we need to see them decodes in our SQL queries. 
 
-To decode the `value` attribute we use function `to_uint256`
+Fortunately, databases have rich libraries of built in functions that
+can be combined into user defined functions to decode these values. We
+just need to know how they are defined and follow the ABI spec.
+
+For example, to decode the `value` attribute we use can function
+`to_uint256`:
 
 ```sql
 select to_uint256(2, '0x000000000000000000000000000000000000000000000000aad50c474db4eb50')
@@ -58,15 +60,15 @@ be used in calculations.
 
 This function `to_uint256` uses functions
 
-- for Postgres: concat, substring, lpad and casts to bit(64) and bigint;
-  see [functions-postgres.sql](./functions-postgres.sql)
+- for Postgres: concat, substring, lpad, and casts to bit(64) and
+  bigint; see [functions-postgres.sql](./functions-postgres.sql)
 - for Redshift: substring, strol; see
   [functions-redshift.sql](./functions-redshift.sql)
   
-Postgres and Redshift functions differ so we define low level functions
-like `to_uint256` separately and then base on them high level functions
-like `to_array`. To create the full library we need to create low
-functions specific to our database with
+Postgres and Redshift built in functions differ so we define low level
+functions like `to_uint256` separately for each database, and then base
+high level functions on them like `to_array`. To create the full library
+we need to create low functions specific to our database with
 [functions-postgres.sql](./functions-postgres.sql) then high functions
 with [functions.sql](./functions.sql).
 
@@ -89,9 +91,10 @@ They correspond to types defined by the ABI spec:
 - address[2] to_fixed_array('address', 2)
 
 and so on. For the full list see `supportedTypesDict` in
-[util.js](./util.js).
+[util.js](./util.js). Please note this is WIP and we may lack functions to decode
+some rare types for which we'll return raw values.
 
-Now armed with these function we can decode logs if we know their
+Now armed with the functions we can decode logs if we know their
 attribute types and names. From this row with a raw log:
 
 | address                                    | topic0                                                             | topic1                                                             | topic2                                                             | topic3 | data                                                               | block_hash                                                         | block_number | transaction_hash                                                   | transaction_index | log_index | transaction_log_index | removed | block_timestamp |
@@ -117,13 +120,13 @@ where topic0 = '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3
 
 ## ABI parser
 
-The functions described above are sufficient to decode events we know
-well with their attribute locations, types and names, like for the
-ubiquitous Transfer. A Dapp however can consist of a dozen contracts
-emitting dozens of different events and crafting correct SQL selects may
-become too hard. So we pack these selects into database views one per
-event definition so they present a higher level view of an event. A view
-for out Transfer event can be used in a query like so:
+The functions introduced above are sufficient to decode events we know
+well together with their attributes' location, types and names, like for
+the ubiquitous Transfer. A Dapp however can run with a dozen contracts
+emitting dozens of different events, and crafting correct SQL selects
+for each of them may become unmanageable. Let's wrap these selects into
+database views one per event, so they give us convenient abstractions of
+events. Then view for our Transfer event can be used in a query like so:
 
 ```sql
 select sum(value), "to" from Transfer_address_from_address_to_uint256_value_d group by 2 order by 1 desc
@@ -131,12 +134,12 @@ select sum(value), "to" from Transfer_address_from_address_to_uint256_value_d gr
 
 This view was created out of the select statement in the previous
 section and the source of its data is still raw logs in `data.logs`.
-Note its full name `Transfer_address_from_address_to_uint256_value_d`
-contains its attributes as there may be other Transfer events with
-different attributes.
+Note its name `Transfer_address_from_address_to_uint256_value_d`
+contains event attributes as there may be other Transfer events with
+different attributes (like the one for erc721).
 
-Most deployed contracts publish their ABI in json files to help 
-interpret their logs. Our Transfer event is defined as:
+Most deployed contracts publish their ABI in json files to help
+interpret their logs. Our Transfer event is defined in ABI as:
 
 ```json
 {
@@ -169,10 +172,18 @@ is sufficient to create a view to decode all raw Transfer logs.
 
 We can parse an ABI file of any contract and create view definitions for
 every event described in it. If we gather ABI files for all the
-contracts we extracted logs for, we can create views for each of them
-and our database of raw logs will become very user friendly. Event views
-will have recognizable names and columns and when queried will return
+contracts we extracted logs for we can create views for each of them.
+Our database of raw logs will then become user friendly with event views
+with recognizable names and columns, which when queried will return
 decoded values we can analyze.
+
+```
+event.ApprovalForAll_address_owner_address_operator_bool_approved_d
+event.Deposit_address_user_uint256_pid_uint256_amount_d
+event.Transfer_address_from_address_to_uint256_tokenId
+event.Transfer_address_from_address_to_uint256_value_d
+event.Withdraw_address_withdrawer_d_uint256_amount_d
+```
 
 ## Contract metadata
 
@@ -194,28 +205,40 @@ There are sources like block explorers and Github repos that publish
 names and labels for contracts, usually together with their ABI files.
 These labels are better suited to navigate Dapps and their contracts:
 labels can be project names like aave, uniswap, beamswap or standards
-like erc20, erc721; contract names are descriptive like AmmFactory or
-Staking or USDT.
+like erc20, erc721, and names of contracts are descriptive like
+AmmFactory or Staking or USDT.
 
-We can gather contract names and labels from open sources and use them
-to create event views per contract, then group them into schemas named
-like their labels. For example, Transfer events of a contract identified
-as USDT and labeled erc20 can be found in a view named
-`erc20.USDT_evt_Transfer`. A great number of Dapp events can be explored
-by selecting from views like `beamswap.AmmFactoryV1_evt_PairCreated` and
-the like.
+We can gather contracts' names and labels from open sources and use them
+to create additional event views per contract, then group them into
+schemas named like their labels. For example, Transfer events of a
+contract identified as USDT and labeled erc20 can be found in a view
+named `erc20.USDT_evt_Transfer`. A great number of Dapp events can be
+explored by selecting from views like
+`beamswap.AmmFactoryV1_evt_PairCreated` and the like.
 
 Note that these *contract views* like `erc20.USDT_evt_Transfer` still
-select from *event views* like 
-`event.Transfer_address_from_address_to_uint256_value_d` but filter on a
-known contract address.
+select from *event views* like
+`event.Transfer_address_from_address_to_uint256_value_d` with a filter
+on a known contract address.
 
-## Example
+```
+beamswap.AmmFactoryV1_evt_PairCreated
+beamswap.FactoryV3V1_evt_OwnerChanged
+beamswap.FactoryV3V1_evt_SetLmPoolDeployer
+beamswap.GlintTokenV1_evt_Approval
+beamswap.GlintTokenV1_evt_Transfer
+```
+
+## Examples
 
 We can now show how to parse ABI files and contract metadata to create
-event and contract views for a Dapp [Beamswap](https://beamswap.io/)
+event and contract views for Dapp [Beamswap](https://beamswap.io/)
 deployed to a Polkadot EVM parachain
-[Moonbeam](https://moonbeam.network/).
+[Moonbeam](https://moonbeam.network/). 
+
+Please see our other repo [evm-archive](../evm-archive) for an ETL tool
+to extract raw logs from Moonbeam full node and load them into
+`data.logs` table of your database.
 
 Beamswap
 [publishes](https://docs.beamswap.io/developers/beamswap-contracts)
@@ -227,7 +250,9 @@ We added the files to this repo in [input/beamswap](./input/beamswap);
 their names are concatenations of contract addresses and names (like
 `0x2fc63231f734850c4b8c6b80c275fdb66983846fStable Pool Nomad V1.json`)
 as extra inputs to the parser. TODO there must be a better way to
-organize it.
+organize this.
+
+### Generate view definitions and metadata
 
 Run the parser to read the ABI files. It's a standalone js script and
 requires node.js installed.
@@ -238,14 +263,24 @@ node parse-abi-files.js
 
 The parser will produce:
 
-- definitions of schemas `parse-abi-create-label-schema.sql`
+- definitions of contract label schemas
+  `parse-abi-create-label-schema.sql`
 - event view definitions `parse-abi-event-view.sql`
 - contract view definitions `parse-abi-event-view.sql`
+- records of metadata in CSV files to be loaded into tables
+  - abi: event names, signatures, parsing logic `parse-abi-abi.csv`
+  - event: many-to-many relationship of events to contracts
+    `parse-abi-event.csv`
+  - contract: addresses, names, labels `parse-abi-contract.csv`
+  - label: contract labels `parse-abi-label.csv`
 
 Take a peek into these scripts to see the SQL statements we talked
 about.
 
-Creating event views in `event` schema.
+Statements to create event views in `event` schema. These views define
+logs parsing logic and don't depend on any metadata tables. You can
+create `event` schema, execute this file and start exploring events
+right away.
 
 ```sql
 create or replace view event."AddLiquidity_address_provider_uint256___tokenAmounts_d_uint256___fees_d_uint256_invariant_d_uint256_lpTokenSupply_d" as select to_address(2,topic1::text) "provider",to_array(2,data::text,'to_uint256') "tokenAmounts",to_array(66,data::text,'to_uint256') "fees",to_uint256(130,data::text) "invariant",to_uint256(194,data::text) "lpTokenSupply", address contract_address, transaction_hash evt_tx_hash, log_index evt_index, block_timestamp evt_block_time, block_number evt_block_number from data.logs where topic0 = '0x189c623b666b1b45b83d7178f39b8c087cb09774317ca2f53c2d3c3726f222a2';
@@ -253,7 +288,10 @@ create or replace view event."FlashLoan_address_receiver_uint8_tokenIndex_d_uint
 create or replace view event."NewAdminFee_uint256_newAdminFee_d" as select to_uint256(2,data::text) "newAdminFee", address contract_address, transaction_hash evt_tx_hash, log_index evt_index, block_timestamp evt_block_time, block_number evt_block_number from data.logs where topic0 = '0xab599d640ca80cde2b09b128a4154a8dfe608cb80f4c9399c8b954b01fd35f38';
 ```
 
-Creating contract views in `beamswap` schema.
+Statements to create contract views in `beamswap` schema (if you process
+ABI sources for contracts of other Dapps they will use their own
+schemas). These views depend on metadata tables to relate contracts and
+views.
 
 ```sql
 create or replace view beamswap."StablePoolNomadV1_evt_AddLiquidity" as select v.* from event."AddLiquidity_address_provider_uint256___tokenAmounts_d_uint256___fees_d_uint256_invariant_d_uint256_lpTokenSupply_d" v left join metadata.event e on lower(e.contract_address) = lower(v.contract_address) left join metadata.contract c on lower(e.contract_address) = lower(c.address) where e.abi_signature = 'AddLiquidity(address indexed provider,uint256[] tokenAmounts,uint256[] fees,uint256 invariant,uint256 lpTokenSupply)' and c.label = 'beamswap' and c.name = 'StablePoolNomadV1';
@@ -263,6 +301,27 @@ create or replace view beamswap."ShareTokenV1_evt_Transfer" as select v.* from e
 create or replace view beamswap."StakingV1_evt_CycleStakingPercentUpdated" as select v.* from event."CycleStakingPercentUpdated_address_token_uint256_previousValue_d_uint256_newValue_d" v left join metadata.event e on lower(e.contract_address) = lower(v.contract_address) left join metadata.contract c on lower(e.contract_address) = lower(c.address) where e.abi_signature = 'CycleStakingPercentUpdated(address indexed token,uint256 previousValue,uint256 newValue)' and c.label = 'beamswap' and c.name = 'StakingV1';
 ```
 
+### End to end with Postgres
+
+Run a shell script to generate and apply SQL to your Postgres database,
+in the correct order:
+
+- generate view definitions and metadata from ABI files
+- create metadata schema in your Postgres database
+- copy metadata csv to Postgres tables
+- create schemas for contract labels
+- create low level functions
+- create high level functions
+- create event views
+- create contract views
+
+Make sure Postgres client [psql](https://www.postgresql.org/download/)
+is installed and connection to your database is defined with env
+variables `PGHOST` et al.; see [example.env](./example.env).
+
+```shell
+./copy-metadata-postgres.sh 
+```
 
 
 

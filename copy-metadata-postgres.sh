@@ -6,23 +6,23 @@ function info() {
     echo
 }
 
-# export namespace=prod && export evm_chain=moonbeam && export evm_network=mainnet
+#export namespace=prod && export evm_chain=moonbeam && export evm_network=mainnet
+#source ./postgres.env
 
+
+env | grep ^PG
 
 info "generate metadata"
 
 node parse-abi-files.js
 
-source ./postgres.env
-env | grep ^PG
-
 info "create metadata schema in postgres"
 psql -f ./schema-metadata-postgres.sql
 
-info "copy csv to postgres"
+info "copy metadata csv to postgres"
 psql -f ./copy-metadata-postgres.sql
 
-info "create schemas"
+info "create schemas for contract labels"
 psql -f metadata/parse-abi-create-label-schema.sql
 
 info "create low level functions in postgres"
