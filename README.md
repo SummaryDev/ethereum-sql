@@ -8,7 +8,7 @@ blockchains by databases Postgres, Amazon Redshift, DuckDb.
 - Utilities to parse ABI files to extract event metadata and create SQL
   scripts to query contract logs.
 
-## ABI functions
+## SQL functions to decode with ABI
 
 Smart contracts notify their users by emitting event logs with payloads
 encoded according to the ABI
