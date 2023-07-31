@@ -119,7 +119,7 @@ from data.logs
 where topic0 = '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef';
 ```
 
-## ABI parser
+## ABI parser to create SQL views for events
 
 The functions introduced above are sufficient to decode events we know
 well together with their attributes' location, types and names, like for
@@ -189,7 +189,7 @@ event.Transfer_address_from_address_to_uint256_value_d
 event.Withdraw_address_withdrawer_d_uint256_amount_d
 ```
 
-## Contract metadata
+## Metadata to create SQL views for contracts
 
 Event views we just introduced work well to query events of contracts
 whose addresses we know. For example, to select Transfers of USDC we
@@ -328,11 +328,3 @@ variables `PGHOST` et al.; see [example.env](./example.env).
 ```shell
 ./copy-metadata-postgres.sh 
 ```
-
-
-
-
-
-
-
-
