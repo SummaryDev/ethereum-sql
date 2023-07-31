@@ -241,7 +241,7 @@ deployed to Polkadot EVM parachain
 [Moonbeam](https://moonbeam.network/). 
 
 Please see our other repo
-[ethereum-archive](https://github.com/SummaryDev/ethereum-archive) for an ETL tool
+[evm-archive](https://github.com/SummaryDev/evm-archive) for an ETL tool
 to extract raw logs from an EVM full node and load them into `data.logs`
 table of your database.
 
