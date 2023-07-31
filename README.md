@@ -237,11 +237,11 @@ beamswap.GlintTokenV1_evt_Transfer
 
 We can now show how to parse ABI files and contract metadata to create
 event and contract views for Dapp [Beamswap](https://beamswap.io/)
-deployed to a Polkadot EVM parachain
+deployed to Polkadot EVM parachain
 [Moonbeam](https://moonbeam.network/). 
 
 Please see our other repo
-[evm-archive](https://github.com/SummaryDev/evm-archive) for an ETL tool
+[ethereum-archive](https://github.com/SummaryDev/ethereum-archive) for an ETL tool
 to extract raw logs from an EVM full node and load them into `data.logs`
 table of your database.
 
